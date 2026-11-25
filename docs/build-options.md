@@ -32,8 +32,8 @@
 4. 把 `patches/kernel/bbr3/900-*.patch` 拷进 `target/linux/generic/hack-6.12/`（由 `include/quilt.mk` 在 backport→pending→**hack**→platform 顺序中自动应用）
 5. [`ci/patch-sparse.py`](../ci/patch-sparse.py) 改 `gen_image_generic.sh` / `image.mk` / `image-commands.mk`（稀疏镜像 + `gzip -1`）
 6. [`ci/gen-config.py`](../ci/gen-config.py) 生成 `.config` → `make defconfig` → [`ci/verify-config.py`](../ci/verify-config.py) 校验
-7. `make download` → `make -j$(nproc)`（编译失败自动禁用该包并重试，最多 6 轮）
-8. 校验分区表、BBRv3（`tcp_bbr.c` 中 `BBR_VERSION 3`）、默认 bbr+fq 配置
+7. `make download` → `make -j$(nproc) EXTRA_IMAGE_NAME="$IW_VERSION"`（`EXTRA_IMAGE_NAME` 把版本号写进产物文件名，得到与官方一致的 `immortalwrt-25.12.2-x86-64-generic-*`；编译失败自动禁用该包并重试，最多 6 轮）
+8. 校验产物文件名、分区表、BBRv3（`tcp_bbr.c` 中 `BBR_VERSION 3`）、默认 bbr+fq 配置
 
 ### 0.2 `.config` 从哪来
 
