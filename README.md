@@ -6,9 +6,11 @@
 - 基础版本：ImmortalWrt **25.12.x**（默认 25.12.2，apk 包管理）
 - 主题：[Vantage](https://github.com/anothaDev/luci-theme-vantage) 1.2.x + 中文语言包，已写入固件并设为默认主题
 - 包清单：来自现网路由 `/etc/apk/world`（423 项），见 [`config/packages.txt`](config/packages.txt)
+- 分区表：与现网设备 `/dev/sda` 完全一致（16 MiB kernel + 20 GiB rootfs），见[下方说明](#分区布局)
 - 产物：
   - `*combined-efi.img.gz` —— UEFI 启动，**推荐**
   - `*combined.img.gz` —— Legacy BIOS 启动
+  - `*rootfs.img.gz` —— 仅 rootfs（供手工组装）
   - `SHA256SUMS.images` —— 校验值
 
 ## 触发构建
@@ -32,6 +34,28 @@ sysupgrade -n /tmp/immortalwrt-x86-64-generic-squashfs-combined-efi.img.gz
 ```
 
 > 当前路由器是 ImmortalWrt SNAPSHOT（main 分支），本仓库基于 25.12 稳定分支，属于跨分支刷机，**建议不保留配置**（`-n`）。
+>
+> 镜像的 rootfs 分区是 20 GiB，sysupgrade 会按分区表整盘写入，写入量约 20 GiB（SSD 上通常 1~3 分钟），期间不要断电。
+
+## 分区布局
+
+现网设备（192.168.31.1，32 GB SSD）的实际分区：
+
+```text
+Device     Boot Start      End  Sectors Size Type
+/dev/sda1  *      512    33279    32768  16M 83 Linux   # /boot（kernel + grub）
+/dev/sda2       33792 41976831 41943040  20G 83 Linux   # squashfs rootfs + f2fs overlay
+```
+
+构建时通过 ImageBuilder 变量固定为同一布局：
+
+| 参数 | 值 | 说明 |
+| --- | --- | --- |
+| `CONFIG_TARGET_KERNEL_PARTSIZE` | `16` | MiB，对应 sda1 |
+| `CONFIG_TARGET_ROOTFS_PARTSIZE` | `20480` | MiB（20 GiB），对应 sda2 |
+| `CONFIG_QCOW2_IMAGES` | `n` | 不需要虚拟机镜像，省时间和磁盘 |
+
+由于 20 GiB 的镜像在 CI 上不可能真实写满，workflow 会把 `gen_image_generic.sh` 和 `Image/pad-to` 的“写零填充”改成 `truncate` 稀疏扩展：文件逻辑大小仍是 20 GiB，磁盘占用只有实际内容（几百 MB），gzip 后的产物约 150 MB。构建结束前会解析 MBR，校验两个分区确实是 16 MiB / 20480 MiB。
 
 ## 自定义
 
@@ -45,12 +69,15 @@ sysupgrade -n /tmp/immortalwrt-x86-64-generic-squashfs-combined-efi.img.gz
 - Vantage 的签名公钥会装进固件 `/etc/apk/keys/`，并把主题源写入 `/etc/apk/repositories.d/99-vantage.list`，之后可在路由上 `apk update && apk upgrade` 单独升级主题。
 - 首次启动由 `files/etc/uci-defaults/zzzz-vantage-theme` 强制选中 Vantage 主题。
 
-## 构建时做的两处修补
+## 构建时做的自动修补
 
-ImageBuilder 25.12.2 直接装 400+ 包会遇到两个坑，workflow 里已自动处理：
+ImageBuilder 25.12.2 装 400+ 包并按现网分区出镜像，会遇到几个坑，workflow 里已自动处理：
 
 1. **`include/rootfs.mk` 空命令 bug**：ImageBuilder 模式下 `$(if $(IB),,awk ...)` 展开为空，生成 `then  ;` 造成 `syntax error near unexpected token ';'`。补丁把空分支改成 `:`。
-2. **rootfs 分区默认只有 300 MB**：未压缩 rootfs 约 436 MB，`make_ext4fs` 报 `failed to allocate ... out of space`。已把 `CONFIG_TARGET_ROOTFS_PARTSIZE` 调到 1024 MB。
+2. **rootfs 分区默认只有 300 MB**：未压缩 rootfs 约 436 MB，`make_ext4fs` 报 `failed to allocate ... out of space`。现已改为 20480 MiB。
+3. **20 GiB 分区写零会打满 runner**：`scripts/gen_image_generic.sh` 用 `dd if=/dev/zero` 填满整个分区，`include/image.mk` 的 `pad-to` 同样。两处都改为 `truncate` 稀疏扩展，逻辑大小不变、真实占用很小。
+4. **gzip -9 压缩 20 GiB 太慢**：镜像内容是已压缩的 xz squashfs，改为 `gzip -1`，产物大小基本不变。
+5. **默认开着 qcow2 镜像**：需要 `qemu-img`，且对刷机无用，直接 `CONFIG_QCOW2_IMAGES=n` 关掉。
 
 ## 常见问题
 
