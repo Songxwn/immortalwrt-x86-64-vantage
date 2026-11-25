@@ -61,9 +61,10 @@ jobs:
           echo "IB=$IB" >> "$GITHUB_ENV"
           echo "ImageBuilder: $IB"
 
-      - name: 修补 ImageBuilder 的 rootfs.mk 已知问题
+      - name: 修补 ImageBuilder 的已知问题
         run: |
           set -euo pipefail
+          # 25.12.2 的 rootfs.mk 在 ImageBuilder 模式下会生成空命令（then  ;），导致语法错误
           f="$IB/include/rootfs.mk"
           if grep -qF '$(if $(IB),,awk -i inplace' "$f"; then
             python3 - "$f" <<'PY'
@@ -79,6 +80,12 @@ jobs:
           else
             echo "rootfs.mk 已是修复版本，跳过"
           fi
+
+          # 默认 rootfs 分区只有 300MB，装完 400+ 包后 ext4 放不下，改为 1024MB
+          sed -i 's/^CONFIG_TARGET_ROOTFS_PARTSIZE=.*/CONFIG_TARGET_ROOTFS_PARTSIZE=1024/' "$IB/.config"
+          grep -q '^CONFIG_TARGET_ROOTFS_PARTSIZE=' "$IB/.config" || \
+            echo 'CONFIG_TARGET_ROOTFS_PARTSIZE=1024' >> "$IB/.config"
+          grep '^CONFIG_TARGET_ROOTFS_PARTSIZE=' "$IB/.config"
 
       - name: 准备 Vantage 主题与签名密钥
         run: |
@@ -111,7 +118,7 @@ jobs:
           ok=0
           for attempt in 1 2 3 4 5 6 7 8 9 10; do
             echo "::group::第 $attempt 次构建"
-            if make image PROFILE="$PROFILE" PACKAGES="$PKGS" FILES="$GITHUB_WORKSPACE/files" 2>&1 | tee build.log; then
+            if make image PROFILE="$PROFILE" PACKAGES="$PKGS" FILES="$GITHUB_WORKSPACE/files" CONFIG_TARGET_ROOTFS_PARTSIZE=1024 2>&1 | tee build.log; then
               ok=1
               echo "::endgroup::"
               break
