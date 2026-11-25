@@ -61,6 +61,25 @@ jobs:
           echo "IB=$IB" >> "$GITHUB_ENV"
           echo "ImageBuilder: $IB"
 
+      - name: 修补 ImageBuilder 的 rootfs.mk 已知问题
+        run: |
+          set -euo pipefail
+          f="$IB/include/rootfs.mk"
+          if grep -qF '$(if $(IB),,awk -i inplace' "$f"; then
+            python3 - "$f" <<'PY'
+          import sys
+          p = sys.argv[1]
+          s = open(p, encoding="utf-8").read()
+          old = "$(if $(IB),,awk -i inplace"
+          new = "$(if $(IB),:,awk -i inplace"
+          assert old in s, "pattern not found"
+          open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+          print("patched:", p)
+          PY
+          else
+            echo "rootfs.mk 已是修复版本，跳过"
+          fi
+
       - name: 准备 Vantage 主题与签名密钥
         run: |
           set -euo pipefail
