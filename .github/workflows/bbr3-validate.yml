@@ -1,0 +1,69 @@
+name: 校验 BBRv3 内核补丁
+
+# 只在手动触发时运行：把 ImmortalWrt 的内核补丁依次打到 linux-6.12.103 上，
+# 再打本仓库的 900-*.patch，确认 BBRv3 补丁能干净应用。
+on:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 下载内核源码与 ImmortalWrt 源码
+        run: |
+          set -euo pipefail
+          KVER=6.12.103
+          curl -fL --retry 5 -o linux.tar.xz "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KVER}.tar.xz"
+          mkdir -p kernel && tar -xf linux.tar.xz -C kernel --strip-components=1
+          rm -f linux.tar.xz
+          curl -fL --retry 5 -o imm.tar.gz "https://github.com/immortalwrt/immortalwrt/archive/refs/tags/v25.12.2.tar.gz"
+          mkdir -p imm && tar -xf imm.tar.gz -C imm --strip-components=1
+          rm -f imm.tar.gz
+          echo "kernel: $(head -n1 kernel/Makefile)"
+          test -d imm/target/linux/generic/hack-6.12
+
+      - name: 打补丁（先 ImmortalWrt 自带，再 BBRv3）
+        run: |
+          set -uo pipefail
+          mkdir -p log
+          total=0; failed=0
+
+          apply_glob() {
+            local label="$1"
+            shift
+            for p in "$@"; do
+              [ -e "$p" ] || continue
+              total=$((total + 1))
+              if ( cd kernel && patch -f -p1 -F2 --no-backup-if-mismatch ) < "$p" > "log/$(basename "$p").log" 2>&1; then
+                echo "OK   $label/$(basename "$p")"
+              else
+                failed=$((failed + 1))
+                echo "FAIL $label/$(basename "$p")"
+                sed -n '1,30p' "log/$(basename "$p").log"
+              fi
+            done
+          }
+
+          echo "===== target/linux/x86/patches-6.12 ====="
+          apply_glob x86 imm/target/linux/x86/patches-6.12/*.patch
+          for d in backport-6.12 pending-6.12 hack-6.12; do
+            echo "===== target/linux/generic/$d ====="
+            apply_glob "$d" imm/target/linux/generic/$d/*.patch
+          done
+          echo "===== 本仓库 BBRv3（900-*.patch） ====="
+          apply_glob bbr3 patches/kernel/bbr3/900-*.patch
+
+          echo
+          echo "补丁总数: $total，失败: $failed"
+          echo "rej 文件: $(find kernel -name '*.rej' | wc -l)"
+
+          echo "----- 结果自检 -----"
+          grep -c 'BBR_BW_PROBE_CRUISE\|bbr_adapt_lower_bounds\|bbr_ecn_lower_bounds' kernel/net/ipv4/tcp_bbr.c || true
+          grep -n 'skb_marked_lost' kernel/include/net/tcp.h | head -n 3 || true
+          grep -n 'TCP_CONG_WANTS_CE_EVENT' kernel/include/net/tcp.h | head -n 3 || true
+
+          test "$failed" -eq 0 || { echo "::error::有 $failed 个补丁应用失败"; exit 1; }
+          echo "所有补丁应用成功"
