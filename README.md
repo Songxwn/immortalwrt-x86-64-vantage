@@ -5,7 +5,8 @@
 - 目标平台：`x86/64`，profile `generic`（适配 CncTion J4125-4L 等 x86 软路由）
 - 基础版本：ImmortalWrt **25.12.x**（默认 25.12.2，apk 包管理）
 - 主题：[Vantage](https://github.com/anothaDev/luci-theme-vantage) 1.2.x + 中文语言包，已写入固件并设为默认主题
-- 包清单：来自现网路由 `/etc/apk/world`（421 项），见 [`config/packages.txt`](config/packages.txt)
+- 拥塞控制：默认启用 **BBR**（`kmod-tcp-bbr` + `fq` 队列），开机自动生效。注意这是**主线内核的 BBRv1**，BBRv3 未进入主线，ImageBuilder 无法启用
+- 包清单：来自现网路由 `/etc/apk/world`（423 项），见 [`config/packages.txt`](config/packages.txt)
 - 分区表：与现网设备 `/dev/sda` 完全一致（16 MiB kernel + 20 GiB rootfs），见[下方说明](#分区布局)
 - 产物：
   - `*combined-efi.img.gz` —— UEFI 启动，**推荐**
@@ -18,7 +19,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [`docs/build-options.md`](docs/build-options.md) | 编译选项中文说明：镜像类型、文件系统、分区、GRUB、全局开关、内核选项、软件源、常用配方 |
-| [`docs/packages.md`](docs/packages.md) | 当前 421 个在装包逐条中文说明（按类别分组） |
+| [`docs/packages.md`](docs/packages.md) | 当前 423 个在装包逐条中文说明（按类别分组） |
 | [`docs/packages-optional.md`](docs/packages-optional.md) | 常用可选包：代理、DNS 过滤、下载、NAS、容器、组网、监控、命令行工具 |
 | [`docs/reference/`](docs/reference/) | 官方原始数据：11 618 个包名/版本、428 条 Kconfig 选项、官方 `.config`/feeds/profile |
 

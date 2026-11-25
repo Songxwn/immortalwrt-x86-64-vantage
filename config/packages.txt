@@ -185,9 +185,11 @@ kmod-r8101
 kmod-r8125
 kmod-r8126
 kmod-r8168
+kmod-sched
 kmod-scsi-core
 kmod-slhc
 kmod-stmmac-core
+kmod-tcp-bbr
 kmod-tg3
 kmod-tulip
 kmod-tun

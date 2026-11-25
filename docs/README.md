@@ -5,7 +5,7 @@
 | 文档 | 内容 | 适合谁 |
 | --- | --- | --- |
 | [build-options.md](build-options.md) | 编译选项逐项中文说明：镜像类型、文件系统、分区、GRUB、全局编译开关、内核选项、软件源、常用定制配方 | 想改镜像结构 / 换文件系统 / 调分区的人 |
-| [packages.md](packages.md) | 当前固件里 **421 个包**逐条中文说明，按系统基础、网络、kmod、存储、容器、LuCI、运行库等分组 | 想删包瘦身 / 搞清楚某个包干什么的人 |
+| [packages.md](packages.md) | 当前固件里 **423 个包**逐条中文说明，按系统基础、网络、kmod、存储、容器、LuCI、运行库等分组 | 想删包瘦身 / 搞清楚某个包干什么的人 |
 | [packages-optional.md](packages-optional.md) | 25.12 官方源里**可用但未安装**的常用包：代理、DNS 过滤、下载、NAS、容器、组网、监控、命令行工具 | 想加功能的人 |
 | [reference/build-options-25.12.2.tsv](reference/build-options-25.12.2.tsv) | 从官方源码提取的 428 条 Kconfig 选项原始数据（符号、类型、英文提示、默认值、依赖） | 想精确查某个 `CONFIG_*` 的人 |
 | [reference/packages-25.12.2-x86_64.tsv](reference/packages-25.12.2-x86_64.tsv) | 25.12.2 x86-64 全部 **11 618 个包**（包名、版本、来源 feed），含 kmods | 查包名 / 确认版本的人 |

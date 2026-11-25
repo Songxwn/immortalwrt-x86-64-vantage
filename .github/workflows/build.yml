@@ -223,6 +223,27 @@ jobs:
           print("分区表与现网设备一致")
           PY
 
+      - name: 校验 BBR 默认配置（bbr + fq）
+        run: |
+          set -euo pipefail
+          ROOT="$IB/build_dir/target-x86_64_musl/root-x86"
+          test -f "$ROOT/etc/sysctl.d/99-bbr.conf" || {
+            echo "::error::固件里缺少 /etc/sysctl.d/99-bbr.conf"; exit 1; }
+          grep -qE '^[[:space:]]*net\.core\.default_qdisc[[:space:]]*=[[:space:]]*fq' "$ROOT/etc/sysctl.d/99-bbr.conf" || {
+            echo "::error::99-bbr.conf 未设置 default_qdisc=fq"; exit 1; }
+          grep -qE '^[[:space:]]*net\.ipv4\.tcp_congestion_control[[:space:]]*=[[:space:]]*bbr' "$ROOT/etc/sysctl.d/99-bbr.conf" || {
+            echo "::error::99-bbr.conf 未设置 tcp_congestion_control=bbr"; exit 1; }
+          grep -rqs 'tcp_bbr' "$ROOT/etc/modules.d" || {
+            echo "::error::tcp_bbr 未加入开机自动加载"; exit 1; }
+          grep -rqs 'sch_fq' "$ROOT/etc/modules.d" || {
+            echo "::error::sch_fq 未加入开机自动加载"; exit 1; }
+          echo "--- $ROOT/etc/sysctl.d ---"
+          ls -l "$ROOT/etc/sysctl.d"
+          echo "--- modules.d 中的 bbr / fq ---"
+          grep -rn 'tcp_bbr' "$ROOT/etc/modules.d" || true
+          grep -rn 'sch_fq' "$ROOT/etc/modules.d" || true
+          echo "BBR（bbr + fq）已写入固件，内核模块开机自动加载"
+
       - name: 收集产物
         run: |
           set -euo pipefail
