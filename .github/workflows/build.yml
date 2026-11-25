@@ -27,7 +27,12 @@ env:
   IW_VERSION: ${{ github.event.inputs.version || '25.12.2' }}
   IW_DIR: immortalwrt
   VANTAGE_REF: v1.2.0
-  CCACHE_MAXSIZE: 2G
+  # ccache：OpenWrt 只导出 CCACHE_DIR/BASEDIR/NOCOMPRESS，不设 COMPILERCHECK，
+  # 于是 ccache 默认按编译器的 mtime 判定缓存有效性。CI 每次都会重新编译工具链，
+  # mtime 每次都变，缓存条目全部失效 —— 这就是「缓存恢复了却仍然要 2 小时」的原因。
+  # 改成按编译器内容判定，工具链完全一致时才能真正命中缓存。
+  CCACHE_COMPILERCHECK: content
+  CCACHE_MAXSIZE: 5G
 
 jobs:
   build:
@@ -137,6 +142,14 @@ jobs:
           set -uo pipefail
           cd "$IW_DIR"
           LOG="$GITHUB_WORKSPACE/build.log"
+          export CCACHE_DIR="$PWD/.ccache"
+          # OpenWrt 自己会编一个 ccache 放在 staging_dir/host/bin；统计要对得上就用它。
+          CCBIN="ccache"
+          [ -x "$PWD/staging_dir/host/bin/ccache" ] && CCBIN="$PWD/staging_dir/host/bin/ccache"
+          echo "::group::ccache 编译前状态"
+          du -sh "$CCACHE_DIR" 2>/dev/null || true
+          "$CCBIN" -s 2>/dev/null || true
+          echo "::endgroup::"
           ok=0
           for attempt in 1 2 3 4 5 6; do
             echo "::group::第 $attempt 次编译"
@@ -171,6 +184,10 @@ jobs:
             make defconfig >/dev/null
           done
           [ "$ok" = "1" ] || { echo "::error::重试 6 次后仍然编译失败"; exit 1; }
+          echo "::group::ccache 编译后状态"
+          du -sh "$CCACHE_DIR" 2>/dev/null || true
+          "$CCBIN" -s 2>/dev/null || true
+          echo "::endgroup::"
           find bin/targets/x86/64 -maxdepth 1 -type f -name '*.img.gz' -printf '%f\n' | sort
 
       # 产物先落盘并上传，这样即使后面的校验失败，也能拿到固件用于排查。

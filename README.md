@@ -42,7 +42,7 @@
 
 构建完成后在 **Releases → Latest build** 直接下载，或在对应 Actions 运行的 **Artifacts** 里下载。
 
-> 源码全量构建首次约 **1.5~3 小时**；workflow 缓存 `.ccache` 和 `dl/`，后续增量构建通常 **30~60 分钟**。单 job 上限 6 小时，workflow 设为 350 分钟。
+> 源码全量构建首次约 **2~2.5 小时**（实测 148~151 分钟）；workflow 会缓存 `.ccache` 和 `dl/`，后续构建通常 **1.5~2 小时**（实测 100~133 分钟）。单 job 上限 6 小时，workflow 设为 350 分钟。
 
 ## 刷机
 
@@ -115,11 +115,12 @@ Device     Boot Start      End  Sectors Size Type
 2. **gzip -9 压缩 20 GiB 太慢**：镜像内容是已压缩的 xz squashfs，改为 `gzip -1`，产物大小基本不变。
 3. **默认开着 qcow2 / VDI / VMDK / VHDX / ISO 镜像和 ext4 变体**：每种格式都会把 20 GiB 分区再完整复制一遍，对刷机毫无用处。现在统一关掉，只保留 squashfs 的 `combined.img.gz`（BIOS）、`combined-efi.img.gz`（UEFI）和 `rootfs.img.gz`。
 4. **部分软件包在 25.12 里会编译失败**：编译失败时脚本自动定位 `ERROR: package/... failed to build`，在 `.config` 里禁用该包并重试。
+5. **ccache 缓存“恢复了却不生效”**：OpenWrt 只导出 `CCACHE_DIR`/`CCACHE_BASEDIR`/`CCACHE_NOCOMPRESS`，没有设 `CCACHE_COMPILERCHECK`，于是 ccache 默认按编译器的 **mtime** 判断缓存是否有效。CI 每次都重新编译工具链，mtime 每次都变，缓存条目全部作废。workflow 里显式设 `CCACHE_COMPILERCHECK=content`（按编译器内容判断）后才真正命中，并把 `CCACHE_MAXSIZE` 提到 5G。
 
 ## 常见问题
 
 - **构建卡在下载 / 下载失败**：ImmortalWrt 镜像站偶尔限速，重跑即可；`make download` 阶段允许部分失败，编译阶段会重试。
-- **首次构建很慢**：源码全量编译正常需要 1.5~3 小时；第二次起有 ccache 缓存会快很多。
+- **首次构建很慢**：源码全量编译正常需要 2~2.5 小时；之后有 ccache 缓存通常会快一些（实测 1.5~2 小时）。ccache 的缓存目录是源码树的 `.ccache/`，缓存命中情况会在编译日志的 “ccache 编译前/后状态” 里打印。
 - **刷完没有 Vantage**：确认刷的是本仓库产物，并在刷机时清除浏览器缓存后重新登录 LuCI。
 - **想确认是不是 BBRv3**：看构建日志里 “校验 BBRv3 已进入 target 内核” 与 “校验内核模块与 packages.txt 已装进固件” 这两步；或 SSH 上路由后 `sysctl net.ipv4.tcp_congestion_control`（应为 `bbr`）、`lsmod | grep tcp_bbr`，再 `dmesg | grep -i bbr` 看版本。
 - **想换 24.10**：本仓库只针对 25.12（apk 体系、主题 25.12 包）。24.10 需要改用 `.ipk` 主题包，且 BBRv3 补丁要换 6.6 版本，不属于当前流程。
