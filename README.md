@@ -121,5 +121,5 @@ Device     Boot Start      End  Sectors Size Type
 - **构建卡在下载 / 下载失败**：ImmortalWrt 镜像站偶尔限速，重跑即可；`make download` 阶段允许部分失败，编译阶段会重试。
 - **首次构建很慢**：源码全量编译正常需要 1.5~3 小时；第二次起有 ccache 缓存会快很多。
 - **刷完没有 Vantage**：确认刷的是本仓库产物，并在刷机时清除浏览器缓存后重新登录 LuCI。
-- **想确认是不是 BBRv3**：看构建日志里 “校验 BBRv3 已进入内核与固件” 这一步；或 SSH 上路由后 `grep -c skb_marked_lost /proc/kallsyms`、`sysctl net.ipv4.tcp_congestion_control`。
+- **想确认是不是 BBRv3**：看构建日志里 “校验 BBRv3 已进入 target 内核” 与 “校验内核模块与 packages.txt 已装进固件” 这两步；或 SSH 上路由后 `sysctl net.ipv4.tcp_congestion_control`（应为 `bbr`）、`lsmod | grep tcp_bbr`，再 `dmesg | grep -i bbr` 看版本。
 - **想换 24.10**：本仓库只针对 25.12（apk 体系、主题 25.12 包）。24.10 需要改用 `.ipk` 主题包，且 BBRv3 补丁要换 6.6 版本，不属于当前流程。
