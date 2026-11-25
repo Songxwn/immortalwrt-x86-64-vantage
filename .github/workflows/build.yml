@@ -144,8 +144,8 @@ jobs:
             fi
             echo "::endgroup::"
 
-            paths="$(grep -oE 'ERROR: [A-Za-z0-9_./-]+ failed to build' "$LOG" \
-                      | sed -E 's/^ERROR: //; s/ failed to build$//' | sort -u || true)"
+            paths="$(grep -oE 'ERROR: [A-Za-z0-9_./-]+ (\[[a-z]+\] )?failed to build' "$LOG" \
+                      | sed -E 's/^ERROR: //; s/ \[[a-z]+\] failed to build$//; s/ failed to build$//' | sort -u || true)"
             pkgs=""
             for p in $paths; do
               echo "编译失败：$p"
@@ -202,26 +202,67 @@ jobs:
           print("分区表与现网设备一致")
           PY
 
-      - name: 校验 BBRv3 已进入内核与固件
+      - name: 校验 BBRv3 已进入 target 内核
         run: |
           set -euo pipefail
-          SRC="$(find "$IW/build_dir" -maxdepth 3 -type d -name 'linux-6.12.*' | head -n1)"
-          test -n "$SRC" || { echo "::error::找不到内核源码目录"; exit 1; }
-          echo "内核源码: $SRC"
+          n="$(ls -1 "$IW"/target/linux/generic/hack-6.12/900-*.patch 2>/dev/null | wc -l)"
+          test "$n" = "19" || { echo "::error::BBRv3 补丁数量为 $n，应为 19"; exit 1; }
+          SRC="$(ls -d "$IW"/build_dir/target-*/linux-*/linux-6.12.*/ 2>/dev/null | head -n1)"
+          test -n "$SRC" || { echo "::error::找不到 target 内核源码目录"; exit 1; }
+          echo "target 内核源码: $SRC"
           grep -n 'define BBR_VERSION' "$SRC/net/ipv4/tcp_bbr.c"
           grep -q 'BBR_VERSION[[:space:]]*3' "$SRC/net/ipv4/tcp_bbr.c" || {
             echo "::error::内核里的 tcp_bbr.c 不是 v3（未找到 BBR_VERSION 3）"; exit 1; }
+          echo "target 内核源码已确认 BBRv3"
 
-          MANIFEST="$(find "$IW/bin/targets/x86/64" -maxdepth 1 -name '*.manifest' | head -n1)"
+      - name: 校验内核模块与 packages.txt 已装进固件
+        run: |
+          set -euo pipefail
+          MANIFEST="$(ls "$IW"/bin/targets/x86/64/*.manifest 2>/dev/null | head -n1)"
           test -n "$MANIFEST" || { echo "::error::找不到镜像 manifest"; exit 1; }
-          grep -E '^kmod-tcp-bbr |^kmod-sched |^kmod-sched-core ' "$MANIFEST" || {
-            echo "::error::manifest 中缺少 kmod-tcp-bbr / kmod-sched"; exit 1; }
-          echo "BBRv3 内核 + kmod-tcp-bbr / kmod-sched 已进入固件"
+          for p in kmod-tcp-bbr kmod-sched kmod-sched-core; do
+            grep -qE "^${p} " "$MANIFEST" || { echo "::error::manifest 缺少 $p（kmod 未装进 rootfs）"; exit 1; }
+          done
+          KN="$(grep -cE '^kmod-' "$MANIFEST")"
+          echo "manifest 中内核模块：$KN 个"
+          test "$KN" -ge 100 || { echo "::error::manifest 中内核模块过少（$KN），kmod 没有被装进 rootfs"; exit 1; }
+
+          python3 - "$GITHUB_WORKSPACE" "$MANIFEST" "$IW/tmp/.packageinfo" <<'PY'
+          import os, sys
+          root, manifest, pkginfo = sys.argv[1], sys.argv[2], sys.argv[3]
+          installed = set()
+          for line in open(manifest, encoding="utf-8"):
+              line = line.strip()
+              if line:
+                  installed.add(line.split(" ")[0])
+          provides = {}
+          if os.path.exists(pkginfo):
+              cur = None
+              for line in open(pkginfo, encoding="utf-8", errors="replace"):
+                  line = line.rstrip("\n")
+                  if line.startswith("Package:"):
+                      cur = line.split(":", 1)[1].strip()
+                  elif line.startswith("Provides:") and cur:
+                      for name in line.split(":", 1)[1].split():
+                          name = name.strip("+-@")
+                          if name:
+                              provides.setdefault(name, set()).add(cur)
+          want = [l.strip() for l in open(os.path.join(root, "config", "packages.txt"), encoding="utf-8")
+                  if l.strip() and not l.startswith("#") and not l.startswith("-")]
+          missing = [n for n in want
+                     if n not in installed and not (provides.get(n, set()) & installed)]
+          print("packages.txt 安装条目 %d 个；未出现在 manifest 中 %d 个" % (len(want), len(missing)))
+          if missing:
+              print("未安装（可能被自动剔除或依赖不满足）：" + ", ".join(missing))
+          if len(missing) > 10:
+              print("::error::过多 packages.txt 中的包未装进固件")
+              sys.exit(1)
+          PY
 
       - name: 校验默认 BBR 配置（bbr + fq）
         run: |
           set -euo pipefail
-          ROOT="$(find "$IW/build_dir" -maxdepth 2 -type d -name 'root-x86*' | head -n1)"
+          ROOT="$(ls -d "$IW"/build_dir/target-*/root-* 2>/dev/null | head -n1)"
           test -n "$ROOT" || { echo "::error::找不到 rootfs 目录"; exit 1; }
           test -f "$ROOT/etc/sysctl.d/99-bbr.conf" || {
             echo "::error::固件里缺少 /etc/sysctl.d/99-bbr.conf"; exit 1; }

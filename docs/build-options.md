@@ -39,7 +39,7 @@
 
 不手写 Kconfig。`ci/gen-config.py` 读取：
 
-- [`config/packages.txt`](../config/packages.txt)：一行一个包名；`kmod-*` 写成 `=m`（独立 `.ko`），其余 `=y`；`-包名` 写成 `# CONFIG_PACKAGE_xxx is not set`
+- [`config/packages.txt`](../config/packages.txt)：一行一个包名，统一写成 `=y`（kmod 也不例外）；`-包名` 写成 `# CONFIG_PACKAGE_xxx is not set`
 - [`reference/profiles.json`](reference/profiles.json)：官方 x86/64 的默认包与设备包，一并纳入
 
 再固定写入目标平台、profile、分区、镜像类型等关键开关。生成的 `.config` 经 `make defconfig` 展开后由 `ci/verify-config.py` 检查：关键开关正确、包名全部解析（虚拟名如 `nftables` 允许由 `nftables-json` 提供），否则构建直接失败。

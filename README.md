@@ -94,7 +94,7 @@ Device     Boot Start      End  Sectors Size Type
 ## 自定义
 
 - 增删软件包：编辑 [`config/packages.txt`](config/packages.txt)，一行一个；`-包名` 表示从默认包里移除（如 `-dnsmasq` 换成 `dnsmasq-full`）。
-  - 内核模块（`kmod-*`）编译为独立 `.ko`（`=m`），其余包编进固件（`=y`），以此保持内核精简、不撑爆 16 MiB 内核分区。
+  - 软件包统一写成 `=y`。内核模块在内核里依旧是独立 `.ko`：OpenWrt 的包 Kconfig 里 `=m` 只会「编出来但不装进 rootfs」（`package/Makefile` 的安装清单只取 `CONFIG_PACKAGE_x=y`），而内核符号本身由构建系统统一按 `=m` 生成，所以 `=y` 也不会把驱动编进内核、不影响 16 MiB 内核分区。
   - `.config` 由 [`ci/gen-config.py`](ci/gen-config.py) 根据 `packages.txt` + 官方默认包自动生成，**不必手写 Kconfig**。
   - 若某个包名不存在或依赖不满足，[`ci/verify-config.py`](ci/verify-config.py) 会在编译前直接报错（虚拟名如 `nftables` 由 `nftables-json` 提供会自动识别）。
 - 覆盖文件：放进 [`files/`](files/)，会原样合并进固件（如 `files/etc/uci-defaults/`）。

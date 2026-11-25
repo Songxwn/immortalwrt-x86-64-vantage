@@ -7,9 +7,11 @@
   * config/packages.txt        —— 现网设备 /etc/apk/world 的包清单（`-包名` 表示显式移除）
   * docs/reference/profiles.json —— 官方 25.12.2 x86/64 的默认包与设备包（会一并纳入）
 
-x86/64 的内核模块一律按 `=m`（独立 .ko）处理，其余包按 `=y`，
-这样内核镜像不会因为把驱动编进内核而撑爆 16 MiB 的 kernel 分区，
-也与现网设备（模块按需加载）保持一致。
+内核模块（kmod-*）虽然在内核里依旧按 `=m`（独立 .ko）编译，但在 OpenWrt 的包
+Kconfig 里必须写成 `=y` 才会被装进 rootfs：`package/Makefile` 的安装清单只取
+`package-y`（`CONFIG_PACKAGE_x=y`），写成 `=m` 只会「编出来但不装」。
+内核符号本身由 scripts/package-metadata.pl 统一按 `=m` 生成，所以 kmod 一律
+`=y` 仍然是可插拔 .ko，不会把驱动编进内核、也不影响 16 MiB 的内核分区。
 """
 import json
 import os
@@ -75,7 +77,7 @@ def main():
     ]
 
     for name in all_pkgs:
-        out.append("CONFIG_PACKAGE_%s=%s" % (name, "m" if name.startswith("kmod-") else "y"))
+        out.append("CONFIG_PACKAGE_%s=y" % name)
     for name in drop:
         out.append("# CONFIG_PACKAGE_%s is not set" % name)
 
