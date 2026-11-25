@@ -59,7 +59,7 @@
 这意味着：
 
 - ✅ 能改：内核编译选项、内核补丁（BBRv3）、软件包编译参数、包选择、分区大小、镜像类型、GRUB 参数、`files/` 覆盖文件。
-- ⏱️ 代价：首次约 2~2.5 小时；workflow 会缓存 `.ccache`，之后约 1.5~2 小时（具体时长取决于 ccache 命中率）。
+- ⏱️ 代价：首次约 2~2.5 小时；workflow 会缓存 `.ccache`，之后约 70~75 分钟（实测命中率约 99%）。
 
 另有一个 **ImageBuilder 备用流程**（[`build-imagebuilder.yml`](../.github/workflows/build-imagebuilder.yml)，**仅手动触发**）：只做“组装”，用官方预编译内核和包拼镜像，二十分钟出结果，可改包/分区/镜像类型，但**内核是 BBRv1**，无法启用 BBRv3。适合只改包清单时快速验证。
 

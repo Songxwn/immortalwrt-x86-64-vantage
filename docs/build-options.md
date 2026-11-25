@@ -13,7 +13,7 @@
 >
 > 本仓库有两条流程：
 >
-> 1. **源码全量编译**（正式固件，[`build.yml`](../.github/workflows/build.yml)）——clone ImmortalWrt `v25.12.x` 源码后 `make`，**所有** `CONFIG_*` 都生效，包括内核选项和 BBRv3 内核补丁。首次约 2~2.5 小时，之后有 ccache 约 1.5~2 小时。
+> 1. **源码全量编译**（正式固件，[`build.yml`](../.github/workflows/build.yml)）——clone ImmortalWrt `v25.12.x` 源码后 `make`，**所有** `CONFIG_*` 都生效，包括内核选项和 BBRv3 内核补丁。首次约 2~2.5 小时，之后有 ccache 约 70~75 分钟（实测命中率约 99%）。
 > 2. **ImageBuilder 组装**（备用快速，[`build-imagebuilder.yml`](../.github/workflows/build-imagebuilder.yml)，仅手动）——用官方预编译内核和包拼镜像，二十分钟出结果，但内核里**只有 BBRv1**。
 >
 > 下面第 1.1/1.2 节是 ImageBuilder 流程的变量；源码流程见[第零节](#零正式流程源码构建bbrv3)。第 3 节起的 `CONFIG_*` 选项在**源码流程里全部可用**，在 ImageBuilder 流程里仅其中一部分（镜像/分区/GRUB/文件系统/包选择）可用，`CONFIG_KERNEL_*` 无效。
