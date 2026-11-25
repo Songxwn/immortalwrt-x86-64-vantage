@@ -1,0 +1,398 @@
+source	symbol	type	prompt	default	depends
+Config-images.in	TARGET_ROOTFS_INITRAMFS	bool	ramdisk	y if USES_INITRAMFS	TARGET_ROOTFS_INITRAMFS
+Config-images.in	TARGET_INITRAMFS_COMPRESSION_NONE	bool	none		
+Config-images.in	TARGET_INITRAMFS_COMPRESSION_GZIP	bool	gzip		
+Config-images.in	TARGET_INITRAMFS_COMPRESSION_BZIP2	bool	bzip2		
+Config-images.in	TARGET_INITRAMFS_COMPRESSION_LZMA	bool	lzma		
+Config-images.in	TARGET_INITRAMFS_COMPRESSION_LZO	bool	lzo		
+Config-images.in	TARGET_INITRAMFS_COMPRESSION_LZ4	bool	lz4		
+Config-images.in	TARGET_INITRAMFS_COMPRESSION_XZ	bool	xz		
+Config-images.in	TARGET_INITRAMFS_COMPRESSION_ZSTD	bool	zstd		
+Config-images.in	EXTERNAL_CPIO	string	Use external cpio	""	
+Config-images.in	TARGET_INITRAMFS_FORCE	bool	Force		TARGET_ROOTFS_INITRAMFS
+Config-images.in	TARGET_ROOTFS_INITRAMFS_SEPARATE	bool	separate ramdisk	y if USES_SEPARATE_INITRAMFS	USES_SEPARATE_INITRAMFS && TARGET_ROOTFS_INITRAMFS && !TARGET_INITRAMFS_FORCE
+Config-images.in	TARGET_ROOTFS_CPIOGZ	bool	cpio.gz	y if USES_CPIOGZ	
+Config-images.in	TARGET_ROOTFS_TARGZ	bool	tar.gz	y if USES_TARGZ	
+Config-images.in	TARGET_ROOTFS_EROFS	bool	erofs	y if USES_EROFS	
+Config-images.in	TARGET_EROFS_PCLUSTER_SIZE	int	physical cluster size (in KiB)	64 if LOW_MEMORY_FOOTPRINT	TARGET_ROOTFS_EROFS
+Config-images.in	TARGET_ROOTFS_EXT4FS	bool	ext4	y if USES_EXT4	
+Config-images.in	TARGET_EXT4_RESERVED_PCT	int	Percentage of reserved blocks in root filesystem	0	TARGET_ROOTFS_EXT4FS
+Config-images.in	TARGET_EXT4_BLOCKSIZE_4K	bool	4k		
+Config-images.in	TARGET_EXT4_BLOCKSIZE_2K	bool	2k		
+Config-images.in	TARGET_EXT4_BLOCKSIZE_1K	bool	1k		
+Config-images.in	TARGET_EXT4_BLOCKSIZE	int		4096 if TARGET_EXT4_BLOCKSIZE_4K	TARGET_ROOTFS_EXT4FS
+Config-images.in	TARGET_EXT4_JOURNAL	bool	Create a journaling filesystem	y	TARGET_ROOTFS_EXT4FS
+Config-images.in	TARGET_ROOTFS_JFFS2	bool	jffs2		USES_JFFS2
+Config-images.in	TARGET_ROOTFS_JFFS2_NAND	bool	jffs2 for NAND	y if USES_JFFS2_NAND	USES_JFFS2_NAND
+Config-images.in	TARGET_ROOTFS_SQUASHFS	bool	squashfs	y if USES_SQUASHFS	
+Config-images.in	TARGET_SQUASHFS_BLOCK_SIZE	int	Block size (in KiB)	64 if LOW_MEMORY_FOOTPRINT	TARGET_ROOTFS_SQUASHFS
+Config-images.in	TARGET_SQUASHFS_BLOCK_READERS	int	mksquashfs tool parallel block reader threads	4	TARGET_ROOTFS_SQUASHFS
+Config-images.in	TARGET_SQUASHFS_SMALL_READERS	int	mksquashfs tool parallel small file reader threads	4	TARGET_ROOTFS_SQUASHFS
+Config-images.in	TARGET_ROOTFS_UBIFS	bool	ubifs	y if USES_UBIFS	USES_UBIFS
+Config-images.in	TARGET_UBIFS_COMPRESSION_NONE	bool	none		
+Config-images.in	TARGET_UBIFS_COMPRESSION_LZO	bool	lzo		
+Config-images.in	TARGET_UBIFS_COMPRESSION_ZLIB	bool	zlib		
+Config-images.in	TARGET_UBIFS_FREE_SPACE_FIXUP	bool	free space fixup	y	
+Config-images.in	TARGET_UBIFS_JOURNAL_SIZE	string	journal size	""	
+Config-images.in	GRUB_IMAGES	bool	Build GRUB images (Linux x86 or x86_64 host only)	y	TARGET_x86
+Config-images.in	GRUB_EFI_IMAGES	bool	Build GRUB EFI images	y	TARGET_x86 || TARGET_armsr || TARGET_loongarch64
+Config-images.in	GRUB_CONSOLE	bool	Use Console Terminal (in addition to Serial)	y	GRUB_IMAGES || GRUB_EFI_IMAGES
+Config-images.in	GRUB_BAUDRATE	int	Serial port baud rate	38400 if TARGET_x86_generic	GRUB_IMAGES || GRUB_EFI_IMAGES
+Config-images.in	GRUB_FLOWCONTROL	bool	Use RTE/CTS on serial console		GRUB_IMAGES || GRUB_EFI_IMAGES
+Config-images.in	GRUB_BOOTOPTS	string	Extra kernel boot options		GRUB_IMAGES || GRUB_EFI_IMAGES
+Config-images.in	GRUB_TIMEOUT	string	Seconds to wait before booting the default entry	"0"	GRUB_IMAGES || GRUB_EFI_IMAGES
+Config-images.in	GRUB_TITLE	string	Title for the menu entry in GRUB	"ImmortalWrt"	GRUB_IMAGES || GRUB_EFI_IMAGES
+Config-images.in	ISO_IMAGES	bool	Build LiveCD image (ISO)	y if BUILDBOT	TARGET_x86
+Config-images.in	QCOW2_IMAGES	bool	Build PVE/KVM image files (QCOW2)	y if BUILDBOT	TARGET_x86 || TARGET_armsr
+Config-images.in	VDI_IMAGES	bool	Build VirtualBox image files (VDI)	y if BUILDBOT	TARGET_x86
+Config-images.in	VMDK_IMAGES	bool	Build VMware image files (VMDK)	y if BUILDBOT	TARGET_x86 || TARGET_armsr
+Config-images.in	VHDX_IMAGES	bool	Build Hyper-V image files (VHDX)	y if BUILDBOT	TARGET_x86
+Config-images.in	TARGET_SERIAL	string	Serial port device	"ttyS0"	TARGET_x86 || TARGET_armsr || TARGET_loongarch64
+Config-images.in	TARGET_IMAGES_GZIP	bool	GZip images	y	TARGET_ROOTFS_EXT4FS || TARGET_x86 || TARGET_armsr || TARGET_malta || TARGET_loongarch64
+Config-images.in	TARGET_KERNEL_PARTSIZE	int	Kernel partition size (in MiB)	8 if TARGET_apm821xx_sata	USES_BOOT_PART
+Config-images.in	TARGET_ROOTFS_PARTSIZE	int	Root filesystem partition size (in MiB)	300 if BUILDBOT	USES_ROOTFS_PART || TARGET_ROOTFS_EXT4FS
+Config-images.in	TARGET_ROOTFS_PARTNAME	string	Root partition on target device		GRUB_IMAGES || GRUB_EFI_IMAGES
+Config-images.in	TARGET_ROOTFS_PERSIST_VAR	bool	Make /var persistent		
+Config-build.in	EXPERIMENTAL	bool	Enable experimental features by default		
+Config-build.in	JSON_OVERVIEW_IMAGE_INFO	bool	Create JSON info file overview per target	y	
+Config-build.in	JSON_CYCLONEDX_SBOM	bool	Create CycloneDX SBOM JSON	BUILDBOT	
+Config-build.in	ALL_NONSHARED	bool	Select all target specific packages by default	BUILDBOT	
+Config-build.in	ALL_KMODS	bool	Select all kernel module packages by default		
+Config-build.in	ALL	bool	Select all userspace packages by default		
+Config-build.in	BUILDBOT	bool	Set build defaults for automatic builds (e.g. via buildbot)		
+Config-build.in	SIGNED_PACKAGES	bool	Cryptographically signed package lists	y	
+Config-build.in	SIGNATURE_CHECK	bool	Enable signature checking in opkg	SIGNED_PACKAGES	
+Config-build.in	DOWNLOAD_CHECK_CERTIFICATE	bool	Enable TLS certificate verification during package download	y	
+Config-build.in	USE_APK	bool	Use APK instead of OPKG to build distribution	y	
+Config-build.in	TESTING_KERNEL	bool	Use the testing kernel version	EXPERIMENTAL	HAS_TESTING_KERNEL
+Config-build.in	DISPLAY_SUPPORT	bool	Show packages that require graphics support (local or remote)		
+Config-build.in	BUILD_PATENTED	bool	Compile with support for patented functionality		
+Config-build.in	BUILD_NLS	bool	Compile with full language support		
+Config-build.in	SHADOW_PASSWORDS	bool		y	
+Config-build.in	CLEAN_IPKG	bool	Remove ipkg/opkg status data files in final images		!USE_APK
+Config-build.in	IPK_FILES_CHECKSUMS	bool	Record files checksums in package metadata		!USE_APK
+Config-build.in	INCLUDE_CONFIG	bool	Include build configuration in firmware		
+Config-build.in	REPRODUCIBLE_DEBUG_INFO	bool	Make debug information reproducible	BUILDBOT	
+Config-build.in	COLLECT_KERNEL_DEBUG	bool	Collect kernel debug information	BUILDBOT	
+Config-build.in	DEBUG	bool	Compile packages with debugging info		
+Config-build.in	USE_GC_SECTIONS	bool	Dead code and data elimination for all packages (EXPERIMENTAL)		
+Config-build.in	USE_LTO	bool	Use the link-time optimizer for all packages (EXPERIMENTAL)		
+Config-build.in	MOLD	def_bool			(aarch64 || arm || i386 || i686 || loongarch64 || m68k || powerpc || powerpc64 || riscv64 || sh4 || x86_64)
+Config-build.in	USE_MOLD	bool	Use the mold linker for all packages		MOLD
+Config-build.in	IPV6	def_bool	Binary stripping method	USE_STRIP   if USE_GLIBC	
+Config-build.in	NO_STRIP	bool	none		
+Config-build.in	USE_STRIP	bool	strip		
+Config-build.in	USE_SSTRIP	bool	sstrip		!USE_GLIBC
+Config-build.in	STRIP_ARGS	string	Strip arguments	"--strip-unneeded --remove-section=.comment --remove-section=.note" if DEBUG	USE_STRIP
+Config-build.in	SSTRIP_DISCARD_TRAILING_ZEROES	bool	Strip trailing zero bytes	y	USE_SSTRIP && !USE_MOLD
+Config-build.in	STRIP_KERNEL_EXPORTS	bool	Strip unnecessary exports from the kernel image		BROKEN
+Config-build.in	USE_MKLIBS	bool	Strip unnecessary functions from libraries		
+Config-build.in	PKG_FANALYZER	bool	Enable gcc fanalyzer	n	
+Config-build.in	PKG_CHECK_FORMAT_SECURITY	bool	Enable gcc format-security	y	
+Config-build.in	PKG_ASLR_PIE_NONE	bool	None		
+Config-build.in	PKG_ASLR_PIE_REGULAR	bool	Regular		
+Config-build.in	PKG_ASLR_PIE_ALL	bool	All	PKG_CC_STACKPROTECTOR_REGULAR	
+Config-build.in	PKG_CC_STACKPROTECTOR_NONE	bool	None		
+Config-build.in	PKG_CC_STACKPROTECTOR_REGULAR	bool	Regular		
+Config-build.in	PKG_CC_STACKPROTECTOR_STRONG	bool	Strong		
+Config-build.in	PKG_CC_STACKPROTECTOR_ALL	bool	All	KERNEL_CC_STACKPROTECTOR_REGULAR	
+Config-build.in	KERNEL_CC_STACKPROTECTOR_NONE	bool	None		
+Config-build.in	KERNEL_CC_STACKPROTECTOR_REGULAR	bool	Regular		
+Config-build.in	KERNEL_CC_STACKPROTECTOR_STRONG	bool	Strong		
+Config-build.in	KERNEL_STACKPROTECTOR	bool		KERNEL_CC_STACKPROTECTOR_REGULAR || KERNEL_CC_STACKPROTECTOR_STRONG	
+Config-build.in	KERNEL_STACKPROTECTOR_STRONG	bool	Enable buffer-overflows detection (FORTIFY_SOURCE)	KERNEL_CC_STACKPROTECTOR_STRONG	
+Config-build.in	PKG_FORTIFY_SOURCE_NONE	bool	None		
+Config-build.in	PKG_FORTIFY_SOURCE_1	bool	Conservative Level 1		
+Config-build.in	PKG_FORTIFY_SOURCE_2	bool	Aggressive Level 2		
+Config-build.in	PKG_FORTIFY_SOURCE_3	bool	Aggressive Level 3	PKG_RELRO_FULL	
+Config-build.in	PKG_RELRO_NONE	bool	None		
+Config-build.in	PKG_RELRO_PARTIAL	bool	Partial		
+Config-build.in	PKG_RELRO_FULL	bool	Full		
+Config-build.in	PKG_DT_RELR	bool	Link with relative relocations (RELR)	y	(aarch64 || i386 || loongarch64 || x86_64)
+Config-build.in	TARGET_ROOTFS_SECURITY_LABELS	bool			
+Config-build.in	SELINUX	bool	Enable SELinux	SELINUXTYPE_dssp	TARGET_ROOTFS_SECURITY_LABELS
+Config-build.in	SELINUXTYPE_targeted	bool	targeted		
+Config-build.in	SELINUXTYPE_dssp	bool	dssp		
+Config-build.in	USE_SECCOMP	bool	Enable SECCOMP	y	(aarch64 || arm || armeb || mips || mipsel || mips64 || mips64el || i386 || loongarch64 || powerpc || x86_64)
+Config-kernel.in	KERNEL_BUILD_USER	string	Custom Kernel Build User Name	"builder" if BUILDBOT	
+Config-kernel.in	KERNEL_BUILD_DOMAIN	string	Custom Kernel Build Domain Name	"buildhost" if BUILDBOT	
+Config-kernel.in	KERNEL_PRINTK	bool	Enable support for printk	y	
+Config-kernel.in	KERNEL_SWAP	bool	Support for paging of anonymous memory (swap)	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_PROC_STRIPPED	bool	Strip non-essential /proc functionality to reduce code size	y if SMALL_FLASH	
+Config-kernel.in	KERNEL_DEBUG_FS	bool	Compile the kernel with debug filesystem enabled	y	
+Config-kernel.in	KERNEL_MIPS_FP_SUPPORT	bool		y if TARGET_pistachio	
+Config-kernel.in	KERNEL_ARM_PMU	bool		y if TARGET_armsr_armv8	(arm || aarch64)
+Config-kernel.in	KERNEL_ARM_PMUV3	bool		y if TARGET_armsr_armv8	(arm_v7 || aarch64)
+Config-kernel.in	KERNEL_RISCV_PMU	bool			riscv64
+Config-kernel.in	KERNEL_RISCV_PMU_SBI	bool			riscv64
+Config-kernel.in	KERNEL_X86_VSYSCALL_EMULATION	bool	Enable vsyscall emulation		x86_64
+Config-kernel.in	KERNEL_PERF_EVENTS	bool	Compile the kernel with performance events and counters		
+Config-kernel.in	KERNEL_PROFILING	bool	Compile the kernel with profiling enabled		
+Config-kernel.in	KERNEL_RPI_AXIPERF	bool	Compile the kernel with RaspberryPi AXI Performance monitors	y	KERNEL_PERF_EVENTS && TARGET_bcm27xx
+Config-kernel.in	KERNEL_UBSAN	bool	Compile the kernel with undefined behaviour sanity checker		
+Config-kernel.in	KERNEL_UBSAN_SANITIZE_ALL	bool	Enable instrumentation for the entire kernel	y	KERNEL_UBSAN
+Config-kernel.in	KERNEL_UBSAN_ALIGNMENT	bool	Enable checking of pointers alignment		KERNEL_UBSAN
+Config-kernel.in	KERNEL_UBSAN_BOUNDS	bool	Perform array index bounds checking		KERNEL_UBSAN
+Config-kernel.in	KERNEL_UBSAN_TRAP	bool	On Sanitizer warnings, abort the running kernel code		KERNEL_UBSAN
+Config-kernel.in	KERNEL_KASAN	bool	Compile the kernel with KASan: runtime memory debugger		(x86_64 || aarch64 || arm || powerpc || riscv64)
+Config-kernel.in	KERNEL_KASAN_VMALLOC	bool	Back mappings in vmalloc space with real shadow memory	KERNEL_KASAN_GENERIC	KERNEL_KASAN
+Config-kernel.in	KERNEL_KASAN_GENERIC	bool	Generic KASAN		
+Config-kernel.in	KERNEL_KASAN_SW_TAGS	bool	Software Tag-Based KASAN		aarch64
+Config-kernel.in	KERNEL_KASAN_HW_TAGS	bool	Hardware Tag-Based KASAN		aarch64
+Config-kernel.in	KERNEL_ARM64_MTE	def_bool	Instrumentation type	KERNEL_KASAN_OUTLINE	KERNEL_KASAN
+Config-kernel.in	KERNEL_KASAN_OUTLINE	bool	Outline instrumentation		
+Config-kernel.in	KERNEL_KASAN_INLINE	bool	Inline instrumentation		
+Config-kernel.in	KERNEL_KCOV	bool	Compile the kernel with code coverage for fuzzing		
+Config-kernel.in	KERNEL_KCOV_ENABLE_COMPARISONS	bool	Enable comparison operands collection by KCOV		KERNEL_KCOV
+Config-kernel.in	KERNEL_KCOV_INSTRUMENT_ALL	bool	Instrument all code by default	y if KERNEL_KCOV	KERNEL_KCOV
+Config-kernel.in	KERNEL_TASKSTATS	bool	Compile the kernel with task resource/io statistics and accounting		
+Config-kernel.in	KERNEL_TASK_DELAY_ACCT	def_bool			
+Config-kernel.in	KERNEL_TASK_IO_ACCOUNTING	def_bool			
+Config-kernel.in	KERNEL_TASK_XACCT	def_bool			
+Config-kernel.in	KERNEL_PSI	bool	Compile the kernel with pressure stall information tracking		
+Config-kernel.in	KERNEL_KALLSYMS	bool	Compile the kernel with symbol table information	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_FTRACE	bool	Compile the kernel with tracing support		!TARGET_uml
+Config-kernel.in	KERNEL_FTRACE_SYSCALLS	bool	Trace system calls		KERNEL_FTRACE
+Config-kernel.in	KERNEL_ENABLE_DEFAULT_TRACERS	bool	Trace process context switches and events		KERNEL_FTRACE
+Config-kernel.in	KERNEL_FUNCTION_TRACER	bool	Function tracer		KERNEL_FTRACE
+Config-kernel.in	KERNEL_FUNCTION_GRAPH_TRACER	bool	Function graph tracer		KERNEL_FUNCTION_TRACER
+Config-kernel.in	KERNEL_DYNAMIC_FTRACE	bool	Enable/disable function tracing dynamically		KERNEL_FUNCTION_TRACER
+Config-kernel.in	KERNEL_FUNCTION_PROFILER	bool	Function profiler		KERNEL_FUNCTION_TRACER
+Config-kernel.in	KERNEL_IRQSOFF_TRACER	bool	Interrupts-off Latency Tracer		KERNEL_FTRACE
+Config-kernel.in	KERNEL_PREEMPT_TRACER	bool	Preemption-off Latency Tracer		KERNEL_FTRACE
+Config-kernel.in	KERNEL_HIST_TRIGGERS	bool	Histogram triggers		KERNEL_FTRACE
+Config-kernel.in	KERNEL_DEBUG_KERNEL	bool			
+Config-kernel.in	KERNEL_DEBUG_INFO	bool	Compile the kernel with debug information	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_DEBUG_INFO_BTF	bool	Enable additional BTF type information	y if (TARGET_armsr || TARGET_bcm27xx_bcm2709 || TARGET_bcm27xx_bcm2710 || TARGET_bcm27xx_bcm2711 || TARGET_bcm27xx_bcm2712 || TARGET_ipq806x_chromium || TARGET_mediatek_filogic || TARGET_mvebu_cortexa53 || TARGET_mvebu_cortexa72 || TARGET_qualcommax_ipq60xx || TARGET_rockchip || TARGET_sunxi_cortexa53 || TARGET_x86_64) && BUILDBOT	!HOST_OS_MACOS
+Config-kernel.in	KERNEL_DEBUG_INFO_BTF_MODULES	def_bool			KERNEL_DEBUG_INFO_BTF
+Config-kernel.in	KERNEL_MODULE_ALLOW_BTF_MISMATCH	bool	Allow loading modules with non-matching BTF type info	y	KERNEL_DEBUG_INFO_BTF_MODULES
+Config-kernel.in	KERNEL_DEBUG_INFO_REDUCED	bool	Reduce debugging information	y if !(TARGET_armsr || TARGET_bcm27xx_bcm2709 || TARGET_bcm27xx_bcm2710 || TARGET_bcm27xx_bcm2711 || TARGET_bcm27xx_bcm2712 || TARGET_ipq806x_chromium || TARGET_mediatek_filogic || TARGET_mvebu_cortexa53 || TARGET_mvebu_cortexa72 || TARGET_qualcommax_ipq60xx || TARGET_rockchip || TARGET_sunxi_cortexa53 || TARGET_x86_64) || !BUILDBOT	KERNEL_DEBUG_INFO
+Config-kernel.in	KERNEL_FRAME_WARN	int		1280 if KERNEL_KASAN && !ARCH_64BIT	
+Config-kernel.in	KERNEL_DEBUG_LL	bool		n	arm
+Config-kernel.in	KERNEL_DEBUG_VIRTUAL	bool	Compile the kernel with VM translations debugging		
+Config-kernel.in	KERNEL_DYNAMIC_DEBUG	bool	Compile the kernel with dynamic printk		
+Config-kernel.in	KERNEL_EARLY_PRINTK	bool	Compile the kernel with early printk	y if TARGET_bcm53xx	arm
+Config-kernel.in	KERNEL_KPROBES	bool	Compile the kernel with kprobes support		
+Config-kernel.in	KERNEL_KPROBE_EVENTS	bool		y if KERNEL_KPROBES	
+Config-kernel.in	KERNEL_BPF_EVENTS	bool	Compile the kernel with BPF event support	y if KERNEL_DEBUG_INFO_BTF	
+Config-kernel.in	KERNEL_PROBE_EVENTS_BTF_ARGS	bool	Support BTF function arguments for probe events		KERNEL_DEBUG_INFO_BTF && KERNEL_KPROBE_EVENTS
+Config-kernel.in	KERNEL_BPF_KPROBE_OVERRIDE	bool		n	KERNEL_KPROBES
+Config-kernel.in	KERNEL_BPF_STREAM_PARSER	bool	Allow a TCP stream parser to be used with BPF_MAP_TYPE_SOCKMAP	y if KERNEL_DEBUG_INFO_BTF	KERNEL_CGROUP_BPF
+Config-kernel.in	KERNEL_NETKIT	bool	Compile the kernel with BPF-programmable network device support	y if KERNEL_DEBUG_INFO_BTF	
+Config-kernel.in	KERNEL_AIO	bool	Compile the kernel with asynchronous IO support	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_IO_URING	bool	Compile the kernel with io_uring support	y if (x86_64 || aarch64)	!SMALL_FLASH
+Config-kernel.in	KERNEL_FHANDLE	bool	Compile the kernel with support for fhandle syscalls	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_FANOTIFY	bool	Compile the kernel with modern file notification support	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_BLK_DEV_BSG	bool	Compile the kernel with SCSI generic v4 support for any block device		
+Config-kernel.in	KERNEL_TRANSPARENT_HUGEPAGE	bool	Transparent Hugepage Support sysfs defaults	KERNEL_TRANSPARENT_HUGEPAGE_ALWAYS	KERNEL_TRANSPARENT_HUGEPAGE
+Config-kernel.in	KERNEL_TRANSPARENT_HUGEPAGE_ALWAYS	bool	always		
+Config-kernel.in	KERNEL_TRANSPARENT_HUGEPAGE_MADVISE	bool	madvise		
+Config-kernel.in	KERNEL_TRANSPARENT_HUGEPAGE_NEVER	bool	never		
+Config-kernel.in	KERNEL_ARM64_CONTPTE	bool	Compile the kernel with Contiguous PTE mappings for user memory	y	aarch64
+Config-kernel.in	KERNEL_HUGETLBFS	bool			
+Config-kernel.in	KERNEL_HUGETLB_PAGE	bool	Compile the kernel with HugeTLB support		
+Config-kernel.in	KERNEL_MAGIC_SYSRQ	bool	Compile the kernel with SysRq support	y	
+Config-kernel.in	KERNEL_DEBUG_PINCTRL	bool	Compile the kernel with pinctrl debugging		
+Config-kernel.in	KERNEL_DEBUG_GPIO	bool	Compile the kernel with gpio debugging		
+Config-kernel.in	KERNEL_COREDUMP	bool			
+Config-kernel.in	KERNEL_ELF_CORE	bool	Enable process core dump support	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_PROVE_LOCKING	bool	Enable kernel lock checking		
+Config-kernel.in	KERNEL_SOFTLOCKUP_DETECTOR	bool	Compile the kernel with detect Soft Lockups		KERNEL_DEBUG_KERNEL
+Config-kernel.in	KERNEL_HARDLOCKUP_DETECTOR	bool	Compile the kernel with detect Hard Lockups		KERNEL_DEBUG_KERNEL
+Config-kernel.in	KERNEL_DETECT_HUNG_TASK	bool	Compile the kernel with detect Hung Tasks	KERNEL_SOFTLOCKUP_DETECTOR	KERNEL_DEBUG_KERNEL
+Config-kernel.in	KERNEL_WQ_WATCHDOG	bool	Compile the kernel with detect Workqueue Stalls		KERNEL_DEBUG_KERNEL
+Config-kernel.in	KERNEL_DEBUG_ATOMIC_SLEEP	bool	Compile the kernel with sleep inside atomic section checking		KERNEL_DEBUG_KERNEL
+Config-kernel.in	KERNEL_DEBUG_VM	bool	Compile the kernel with debug VM		KERNEL_DEBUG_KERNEL
+Config-kernel.in	KERNEL_PRINTK_TIME	bool	Enable printk timestamps	y	
+Config-kernel.in	KERNEL_SLUB_DEBUG	bool	Enable SLUB debugging support		
+Config-kernel.in	KERNEL_SLUB_DEBUG_ON	bool	Boot kernel with basic caches debugging enabled		KERNEL_SLUB_DEBUG
+Config-kernel.in	KERNEL_STACKDEPOT_MAX_FRAMES	int		64	KERNEL_SLUB_DEBUG
+Config-kernel.in	KERNEL_PROC_PAGE_MONITOR	bool	Enable /proc page monitoring		
+Config-kernel.in	KERNEL_RELAY	bool			
+Config-kernel.in	KERNEL_KEXEC	bool	Enable kexec support		
+Config-kernel.in	KERNEL_PROC_VMCORE	bool			
+Config-kernel.in	KERNEL_PROC_KCORE	bool			
+Config-kernel.in	KERNEL_CRASH_DUMP	bool	Enable support for kexec crashdump	y	i386 || x86_64 || arm || armeb
+Config-kernel.in	USE_RFKILL	bool	Enable rfkill support	RFKILL_SUPPORT	
+Config-kernel.in	USE_SPARSE	bool	Enable sparse check during kernel build		
+Config-kernel.in	KERNEL_DEVTMPFS	bool	Compile the kernel with device tmpfs enabled		
+Config-kernel.in	KERNEL_DEVTMPFS_MOUNT	bool	Automatically mount devtmpfs after root filesystem is mounted		
+Config-kernel.in	KERNEL_KEYS	bool	Enable kernel access key retention support	!SMALL_FLASH	
+Config-kernel.in	KERNEL_PERSISTENT_KEYRINGS	bool	Enable kernel persistent keyrings		KERNEL_KEYS
+Config-kernel.in	KERNEL_KEYS_REQUEST_CACHE	bool	Enable temporary caching of the last request_key() result		KERNEL_KEYS
+Config-kernel.in	KERNEL_BIG_KEYS	bool	Enable large payload keys on kernel keyrings		KERNEL_KEYS
+Config-kernel.in	KERNEL_CGROUPS	bool	Enable kernel cgroups	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_CGROUP_DEBUG	bool	Example debug cgroup subsystem		
+Config-kernel.in	KERNEL_FREEZER	bool			
+Config-kernel.in	KERNEL_CGROUP_FREEZER	bool	legacy Freezer cgroup subsystem		
+Config-kernel.in	KERNEL_CGROUP_DEVICE	bool	legacy Device controller for cgroups		
+Config-kernel.in	KERNEL_CGROUP_HUGETLB	bool	HugeTLB controller		
+Config-kernel.in	KERNEL_CGROUP_PIDS	bool	PIDs cgroup subsystem	y	
+Config-kernel.in	KERNEL_CGROUP_RDMA	bool	RDMA controller for cgroups	y	
+Config-kernel.in	KERNEL_CGROUP_BPF	bool	Support for eBPF programs attached to cgroups	y	
+Config-kernel.in	KERNEL_CPUSETS	bool	Cpuset support	y	
+Config-kernel.in	KERNEL_CPUSETS_V1	bool	Legacy cgroup v1 cpusets controller	n	KERNEL_CPUSETS
+Config-kernel.in	KERNEL_PROC_PID_CPUSET	bool	Include legacy /proc/<pid>/cpuset file		KERNEL_CPUSETS
+Config-kernel.in	KERNEL_CGROUP_CPUACCT	bool	Simple CPU accounting cgroup subsystem	y	
+Config-kernel.in	KERNEL_MEMCG	bool	Memory Resource Controller for Control Groups	y	
+Config-kernel.in	KERNEL_MEMCG_KMEM	bool	Memory Resource Controller Kernel Memory accounting (EXPERIMENTAL)	y	KERNEL_MEMCG
+Config-kernel.in	KERNEL_MEMCG_V1	bool	Legacy cgroup v1 memory controller	n	KERNEL_MEMCG
+Config-kernel.in	KERNEL_CGROUP_PERF	bool	Enable perf_event per-cpu per-container group (cgroup) monitoring		
+Config-kernel.in	KERNEL_CGROUP_SCHED	bool	Group CPU scheduler	y	
+Config-kernel.in	KERNEL_FAIR_GROUP_SCHED	bool	Group scheduling for SCHED_OTHER	y	
+Config-kernel.in	KERNEL_CFS_BANDWIDTH	bool	CPU bandwidth provisioning for FAIR_GROUP_SCHED	y	KERNEL_FAIR_GROUP_SCHED
+Config-kernel.in	KERNEL_RT_GROUP_SCHED	bool	Group scheduling for SCHED_RR/FIFO	y	
+Config-kernel.in	KERNEL_BLK_CGROUP	bool	Block IO controller	y	
+Config-kernel.in	KERNEL_CFQ_GROUP_IOSCHED	bool	Proportional weight of disk bandwidth in CFQ		
+Config-kernel.in	KERNEL_BLK_DEV_THROTTLING	bool	Enable throttling policy	y	
+Config-kernel.in	KERNEL_BLK_DEV_THROTTLING_LOW	bool	Block throttling .low limit interface support (EXPERIMENTAL)		KERNEL_BLK_DEV_THROTTLING
+Config-kernel.in	KERNEL_DEBUG_BLK_CGROUP	bool	Enable Block IO controller debugging		KERNEL_BLK_CGROUP
+Config-kernel.in	KERNEL_NET_CLS_CGROUP	bool	legacy Control Group Classifier		
+Config-kernel.in	KERNEL_CGROUP_NET_CLASSID	bool	legacy Network classid cgroup		
+Config-kernel.in	KERNEL_CGROUP_NET_PRIO	bool	legacy Network priority cgroup		
+Config-kernel.in	KERNEL_NAMESPACES	bool	Enable kernel namespaces	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_UTS_NS	bool	UTS namespace	y	
+Config-kernel.in	KERNEL_IPC_NS	bool	IPC namespace	y	
+Config-kernel.in	KERNEL_USER_NS	bool	User namespace (EXPERIMENTAL)	y	
+Config-kernel.in	KERNEL_PID_NS	bool	PID Namespaces	y	
+Config-kernel.in	KERNEL_NET_NS	bool	Network namespace	y	
+Config-kernel.in	KERNEL_POSIX_MQUEUE	bool	POSIX Message Queues	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_SECCOMP_FILTER	bool		y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_SECCOMP	bool	Enable seccomp support	y if !SMALL_FLASH	!(TARGET_uml)
+Config-kernel.in	KERNEL_IP_MROUTE	bool	Enable IPv4 multicast routing	y	
+Config-kernel.in	KERNEL_IP_MROUTE_MULTIPLE_TABLES	def_bool			
+Config-kernel.in	KERNEL_IP_PIMSM_V1	def_bool			
+Config-kernel.in	KERNEL_IP_PIMSM_V2	def_bool			
+Config-kernel.in	KERNEL_IPV6	def_bool			
+Config-kernel.in	KERNEL_IPV6_MULTIPLE_TABLES	def_bool			
+Config-kernel.in	KERNEL_IPV6_SUBTREES	def_bool			
+Config-kernel.in	KERNEL_IPV6_MROUTE	bool	Enable IPv6 multicast routing	y	
+Config-kernel.in	KERNEL_IPV6_MROUTE_MULTIPLE_TABLES	def_bool			
+Config-kernel.in	KERNEL_IPV6_PIMSM_V2	def_bool			
+Config-kernel.in	KERNEL_IPV6_SEG6_LWTUNNEL	bool	Enable support for lightweight tunnels	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_LWTUNNEL_BPF	def_bool			
+Config-kernel.in	KERNEL_NET_L3_MASTER_DEV	bool	L3 Master device support	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_DCB	bool	Data Center Bridging support	y if TARGET_armsr_armv8	
+Config-kernel.in	KERNEL_XDP_SOCKETS	bool	XDP sockets support	y if KERNEL_DEBUG_INFO_BTF	
+Config-kernel.in	KERNEL_PAGE_POOL	def_bool			
+Config-kernel.in	KERNEL_PAGE_POOL_STATS	bool	Page pool stats support		KERNEL_PAGE_POOL
+Config-kernel.in	KERNEL_MPTCP	bool	Multi-Path TCP support	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_MPTCP_IPV6	bool	IPv6 support for Multipath TCP	KERNEL_MPTCP	KERNEL_MPTCP
+Config-kernel.in	KERNEL_NF_CONNTRACK_TIMEOUT	bool	Per-connection connection tracking timeout	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_IP_PNP	bool	Compile the kernel with rootfs on NFS		
+Config-kernel.in	KERNEL_IP_PNP_DHCP	def_bool			
+Config-kernel.in	KERNEL_IP_PNP_BOOTP	def_bool			
+Config-kernel.in	KERNEL_IP_PNP_RARP	def_bool			
+Config-kernel.in	KERNEL_NFS_FS	def_bool			
+Config-kernel.in	KERNEL_NFS_V2	def_bool			
+Config-kernel.in	KERNEL_NFS_V3	def_bool			
+Config-kernel.in	KERNEL_ROOT_NFS	def_bool			
+Config-kernel.in	KERNEL_BTRFS_FS	bool	Compile the kernel with built-in BTRFS support		
+Config-kernel.in	KERNEL_EROFS_FS	bool	Compile the kernel with built-in EROFS support		
+Config-kernel.in	KERNEL_EROFS_FS_XATTR	bool	EROFS XATTR support		
+Config-kernel.in	KERNEL_EROFS_FS_ZIP	bool		y if KERNEL_EROFS_FS	
+Config-kernel.in	KERNEL_EROFS_FS_ZIP_LZMA	bool		y if KERNEL_EROFS_FS	
+Config-kernel.in	USE_FS_ACL_ATTR	bool	Use filesystem ACL and attr support by default	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_FS_POSIX_ACL	bool	Enable POSIX ACL support	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_BTRFS_FS_POSIX_ACL	bool	Enable POSIX ACL for BtrFS Filesystems	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_EROFS_FS_POSIX_ACL	bool	Enable POSIX ACL for EROFS Filesystems	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_EXT4_FS_POSIX_ACL	bool	Enable POSIX ACL for Ext4 Filesystems	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_F2FS_FS_POSIX_ACL	bool	Enable POSIX ACL for F2FS Filesystems	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_JFFS2_FS_POSIX_ACL	bool	Enable POSIX ACL for JFFS2 Filesystems	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_TMPFS_POSIX_ACL	bool	Enable POSIX ACL for TMPFS Filesystems	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_CIFS_ACL	bool	Enable CIFS ACLs	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_HFS_FS_POSIX_ACL	bool	Enable POSIX ACL for HFS Filesystems	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_HFSPLUS_FS_POSIX_ACL	bool	Enable POSIX ACL for HFS+ Filesystems	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_NFS_ACL_SUPPORT	bool	Enable ACLs for NFS	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_NFS_V3_ACL_SUPPORT	bool	Enable ACLs for NFSv3		
+Config-kernel.in	KERNEL_NFSD_V2_ACL_SUPPORT	bool	Enable ACLs for NFSDv2		
+Config-kernel.in	KERNEL_NFSD_V3_ACL_SUPPORT	bool	Enable ACLs for NFSDv3		
+Config-kernel.in	KERNEL_REISER_FS_POSIX_ACL	bool	Enable POSIX ACLs for ReiserFS	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_XFS_POSIX_ACL	bool	Enable POSIX ACLs for XFS	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_JFS_POSIX_ACL	bool	Enable POSIX ACLs for JFS	y if USE_FS_ACL_ATTR	
+Config-kernel.in	KERNEL_DEVMEM	bool	/dev/mem virtual device support		
+Config-kernel.in	KERNEL_SQUASHFS_FRAGMENT_CACHE_SIZE	int	Number of squashfs fragments cached	2 if (SMALL_FLASH && !LOW_MEMORY_FOOTPRINT)	
+Config-kernel.in	KERNEL_SQUASHFS_XATTR	bool	Squashfs XATTR support	KERNEL_CC_OPTIMIZE_FOR_SIZE if SMALL_FLASH	
+Config-kernel.in	KERNEL_CC_OPTIMIZE_FOR_PERFORMANCE	bool	Optimize for performance		
+Config-kernel.in	KERNEL_CC_OPTIMIZE_FOR_SIZE	bool	Optimize for size		
+Config-kernel.in	KERNEL_AUDIT	bool	Auditing support		
+Config-kernel.in	KERNEL_SECURITY	bool	Enable different security models		
+Config-kernel.in	KERNEL_SECURITY_NETWORK	bool	Socket and Networking Security Hooks		
+Config-kernel.in	KERNEL_SECURITY_SELINUX	bool	NSA SELinux Support		
+Config-kernel.in	KERNEL_SECURITY_SELINUX_BOOTPARAM	bool	NSA SELinux boot parameter	y	KERNEL_SECURITY_SELINUX
+Config-kernel.in	KERNEL_SECURITY_SELINUX_DEVELOP	bool	NSA SELinux Development Support	y	KERNEL_SECURITY_SELINUX
+Config-kernel.in	KERNEL_SECURITY_SELINUX_SIDTAB_HASH_BITS	int		9	KERNEL_SECURITY_SELINUX
+Config-kernel.in	KERNEL_SECURITY_SELINUX_SID2STR_CACHE_SIZE	int		256	KERNEL_SECURITY_SELINUX
+Config-kernel.in	KERNEL_LSM	string		"lockdown,yama,loadpin,safesetid,integrity,selinux"	KERNEL_SECURITY_SELINUX
+Config-kernel.in	KERNEL_EROFS_FS_SECURITY	bool	EROFS Security Labels	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_EXT4_FS_SECURITY	bool	Ext4 Security Labels	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_F2FS_FS_SECURITY	bool	F2FS Security Labels	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_UBIFS_FS_SECURITY	bool	UBIFS Security Labels	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_JFFS2_FS_SECURITY	bool	JFFS2 Security Labels	y if !SMALL_FLASH	
+Config-kernel.in	KERNEL_WERROR	bool	Compile the kernel with warnings as errors		
+target-Config.in	HAS_TESTING_KERNEL	bool			
+target-Config.in	HAS_SPE_FPU	bool			powerpc
+target-Config.in	HAS_FPU	bool			
+target-Config.in	HAS_DT_OVERLAY_SUPPORT	bool			
+target-Config.in	AUDIO_SUPPORT	bool			
+target-Config.in	GPIO_SUPPORT	bool			
+target-Config.in	PCI_SUPPORT	bool			
+target-Config.in	PCIE_SUPPORT	bool			
+target-Config.in	PCMCIA_SUPPORT	bool			
+target-Config.in	PINCTRL_SUPPORT	bool			
+target-Config.in	PWM_SUPPORT	bool			
+target-Config.in	USB_SUPPORT	bool			
+target-Config.in	USB_GADGET_SUPPORT	bool			
+target-Config.in	RTC_SUPPORT	bool			
+target-Config.in	BIG_ENDIAN	bool			
+target-Config.in	USES_PM	bool			
+target-Config.in	USES_DEVICETREE	bool			
+target-Config.in	USES_INITRAMFS	bool			
+target-Config.in	USES_SEPARATE_INITRAMFS	bool			
+target-Config.in	USES_SQUASHFS	bool			
+target-Config.in	USES_JFFS2	bool			
+target-Config.in	USES_JFFS2_NAND	bool			
+target-Config.in	USES_EXT4	bool			
+target-Config.in	USES_EROFS	bool			
+target-Config.in	USES_TARGZ	bool			
+target-Config.in	USES_CPIOGZ	bool			
+target-Config.in	USES_MINOR	bool			
+target-Config.in	USES_UBIFS	bool			
+target-Config.in	LOW_MEMORY_FOOTPRINT	bool			
+target-Config.in	SMALL_FLASH	bool			
+target-Config.in	NOMMU	bool			
+target-Config.in	HAS_MIPS16	bool			(mips || mipsel || mips64 || mips64el)
+target-Config.in	RFKILL_SUPPORT	bool			
+target-Config.in	EMMC_SUPPORT	bool			
+target-Config.in	NAND_SUPPORT	bool			
+target-Config.in	LEGACY_SDCARD_SUPPORT	bool			
+target-Config.in	ARCH_64BIT	bool			
+target-Config.in	VIRTIO_SUPPORT	bool			
+target-Config.in	USES_ROOTFS_PART	bool			
+target-Config.in	USES_BOOT_PART	bool			
+target-Config.in	aarch64	bool			
+target-Config.in	aarch64_be	bool			
+target-Config.in	arc	bool			
+target-Config.in	arceb	bool			
+target-Config.in	arm	bool			
+target-Config.in	armeb	bool			
+target-Config.in	arm_v6	bool			
+target-Config.in	arm_v7	bool			
+target-Config.in	i386	bool			
+target-Config.in	i686	bool			
+target-Config.in	loongarch64	bool			
+target-Config.in	m68k	bool			
+target-Config.in	mips	bool			
+target-Config.in	mipsel	bool			
+target-Config.in	mips64	bool			
+target-Config.in	mips64el	bool			
+target-Config.in	powerpc	bool			
+target-Config.in	powerpc64	bool			
+target-Config.in	riscv64	bool			
+target-Config.in	sh3	bool			
+target-Config.in	sh3eb	bool			
+target-Config.in	sh4	bool			
+target-Config.in	sh4eb	bool			
+target-Config.in	sparc	bool			
+target-Config.in	x86_64	bool			
+target-Config.in	ARCH	string		"aarch64"   if aarch64	
