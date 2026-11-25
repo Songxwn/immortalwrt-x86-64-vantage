@@ -119,12 +119,16 @@ jobs:
           PY
 
           # 5) 分区表对齐现网设备（/dev/sda：16 MiB kernel + 20 GiB rootfs）
-          for kv in CONFIG_TARGET_KERNEL_PARTSIZE=16 CONFIG_TARGET_ROOTFS_PARTSIZE=20480; do
+          #    同时关掉所有虚拟机/ISO 镜像：它们会把 20 GiB 分区再复制好几遍，
+          #    既慢又没有刷机价值（ISO 还需要 mkisofs）
+          for kv in CONFIG_TARGET_KERNEL_PARTSIZE=16 CONFIG_TARGET_ROOTFS_PARTSIZE=20480 \
+                    CONFIG_ISO_IMAGES=n CONFIG_QCOW2_IMAGES=n CONFIG_VDI_IMAGES=n \
+                    CONFIG_VMDK_IMAGES=n CONFIG_VHDX_IMAGES=n CONFIG_TARGET_ROOTFS_EXT4FS=n; do
             k="${kv%%=*}"
             sed -i "/^${k}=/d" "$IB/.config"
             echo "$kv" >> "$IB/.config"
           done
-          grep -E '^CONFIG_TARGET_(KERNEL|ROOTFS)_PARTSIZE=' "$IB/.config"
+          grep -E '^CONFIG_(TARGET_(KERNEL|ROOTFS)_PARTSIZE|TARGET_ROOTFS_EXT4FS|ISO_IMAGES|QCOW2_IMAGES|VDI_IMAGES|VMDK_IMAGES|VHDX_IMAGES)=' "$IB/.config"
 
       - name: 准备 Vantage 主题与签名密钥
         run: |
@@ -159,7 +163,8 @@ jobs:
             echo "::group::第 $attempt 次构建"
             if make image PROFILE="$PROFILE" PACKAGES="$PKGS" FILES="$GITHUB_WORKSPACE/files" \
                  CONFIG_TARGET_KERNEL_PARTSIZE=16 CONFIG_TARGET_ROOTFS_PARTSIZE=20480 \
-                 CONFIG_QCOW2_IMAGES=n 2>&1 | tee build.log; then
+                 CONFIG_QCOW2_IMAGES=n CONFIG_ISO_IMAGES=n CONFIG_VDI_IMAGES=n \
+                 CONFIG_VMDK_IMAGES=n CONFIG_VHDX_IMAGES=n CONFIG_TARGET_ROOTFS_EXT4FS=n 2>&1 | tee build.log; then
               ok=1
               echo "::endgroup::"
               break

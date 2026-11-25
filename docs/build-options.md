@@ -6,7 +6,8 @@
 - 全局编译/包管理/加固：来自 [`config/Config-build.in`](https://github.com/immortalwrt/immortalwrt/blob/openwrt-25.12/config/Config-build.in)
 - 内核：来自 [`config/Config-kernel.in`](https://github.com/immortalwrt/immortalwrt/blob/openwrt-25.12/config/Config-kernel.in)
 - 平台特性：来自 [`target/Config.in`](https://github.com/immortalwrt/immortalwrt/blob/openwrt-25.12/target/Config.in)
-- 全部 397 个符号（含英文提示、默认值、依赖）见 [`reference/build-options-25.12.2.tsv`](reference/build-options-25.12.2.tsv)
+- 开发者选项：来自 [`config/Config-devel.in`](https://github.com/immortalwrt/immortalwrt/blob/openwrt-25.12/config/Config-devel.in)
+- 全部 428 个符号（含英文提示、默认值、依赖）见 [`reference/build-options-25.12.2.tsv`](reference/build-options-25.12.2.tsv)
 
 > **重要前提：ImageBuilder 能改什么**
 >

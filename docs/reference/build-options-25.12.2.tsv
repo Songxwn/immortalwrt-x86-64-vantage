@@ -330,6 +330,37 @@ Config-kernel.in	KERNEL_F2FS_FS_SECURITY	bool	F2FS Security Labels	y if !SMALL_F
 Config-kernel.in	KERNEL_UBIFS_FS_SECURITY	bool	UBIFS Security Labels	y if !SMALL_FLASH	
 Config-kernel.in	KERNEL_JFFS2_FS_SECURITY	bool	JFFS2 Security Labels	y if !SMALL_FLASH	
 Config-kernel.in	KERNEL_WERROR	bool	Compile the kernel with warnings as errors		
+Config-devel.in	DEVEL	bool	Advanced configuration options (for developers)		
+Config-devel.in	BROKEN	bool	Show broken platforms / packages / devices		
+Config-devel.in	BINARY_FOLDER	string	Binary folder	""	
+Config-devel.in	DOWNLOAD_TOOL_CUSTOM	string	Use custom download tool	""	
+Config-devel.in	DOWNLOAD_FOLDER	string	Download folder	""	
+Config-devel.in	LOCALMIRROR	string	Local mirror for source packages	""	
+Config-devel.in	AUTOREBUILD	bool	Automatic rebuild of packages	y	
+Config-devel.in	AUTOREMOVE	bool	Automatic removal of build directories		
+Config-devel.in	BUILD_ALL_HOST_TOOLS	bool	Compile all host tools		
+Config-devel.in	OPTIMIZE_HOST_TOOLS	bool	Host Tools compile options		
+Config-devel.in	HOST_FLAGS_OPT	string	Host Tools optimization flags	"-O2"	
+Config-devel.in	HOST_TOOLS_STRIP	bool	Strip Host Tools		
+Config-devel.in	HOST_FLAGS_STRIP	string	Host Tools compiler/linker flags for stripping symbols	"-Wl,-s"	HOST_TOOLS_STRIP
+Config-devel.in	HOST_EXTRA_CFLAGS	string	Host Tools extra CFLAGS	""	
+Config-devel.in	HOST_EXTRA_CXXFLAGS	string	Host Tools extra CXXFLAGS	""	
+Config-devel.in	HOST_EXTRA_CPPFLAGS	string	Host Tools extra CPPFLAGS	""	
+Config-devel.in	HOST_EXTRA_LDFLAGS	string	Host Tools extra LDFLAGS	""	
+Config-devel.in	BUILD_SUFFIX	string	Build suffix to append to the target BUILD_DIR variable	""	
+Config-devel.in	TARGET_ROOTFS_DIR	string	Override the default TARGET_ROOTFS_DIR variable	""	
+Config-devel.in	CCACHE	bool	Use ccache		
+Config-devel.in	CCACHE_DIR	string	Set ccache directory	""	
+Config-devel.in	KERNEL_CFLAGS	string	Kernel extra CFLAGS	"-falign-functions=32" if TARGET_bcm53xx	
+Config-devel.in	EXTERNAL_KERNEL_TREE	string	Use external kernel tree	""	
+Config-devel.in	KERNEL_GIT_CLONE_URI	string	Enter git repository to clone	""	
+Config-devel.in	KERNEL_GIT_LOCAL_REPOSITORY	string	Enter path to local reference repository	""	(KERNEL_GIT_CLONE_URI != "")
+Config-devel.in	KERNEL_GIT_REF	string	Enter git ref at which to checkout	""	(KERNEL_GIT_CLONE_URI != "")
+Config-devel.in	KERNEL_GIT_MIRROR_HASH	string	Enter hash of Git kernel tree source checkout tarball	""	(KERNEL_GIT_CLONE_URI != "")
+Config-devel.in	BUILD_LOG	bool	Enable log files during build process		
+Config-devel.in	BUILD_LOG_DIR	string	Log folder	""	
+Config-devel.in	SRC_TREE_OVERRIDE	bool	Enable package source tree override		
+Config-devel.in	EXTRA_OPTIMIZATION	string	Additional compiler options	"-fno-caller-saves -fno-plt" if !CONFIG_EXTERNAL_TOOLCHAIN && !arc	
 target-Config.in	HAS_TESTING_KERNEL	bool			
 target-Config.in	HAS_SPE_FPU	bool			powerpc
 target-Config.in	HAS_FPU	bool			

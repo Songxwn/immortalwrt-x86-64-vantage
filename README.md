@@ -5,7 +5,7 @@
 - 目标平台：`x86/64`，profile `generic`（适配 CncTion J4125-4L 等 x86 软路由）
 - 基础版本：ImmortalWrt **25.12.x**（默认 25.12.2，apk 包管理）
 - 主题：[Vantage](https://github.com/anothaDev/luci-theme-vantage) 1.2.x + 中文语言包，已写入固件并设为默认主题
-- 包清单：来自现网路由 `/etc/apk/world`（422 项），见 [`config/packages.txt`](config/packages.txt)
+- 包清单：来自现网路由 `/etc/apk/world`（421 项），见 [`config/packages.txt`](config/packages.txt)
 - 分区表：与现网设备 `/dev/sda` 完全一致（16 MiB kernel + 20 GiB rootfs），见[下方说明](#分区布局)
 - 产物：
   - `*combined-efi.img.gz` —— UEFI 启动，**推荐**
@@ -18,9 +18,9 @@
 | 文档 | 内容 |
 | --- | --- |
 | [`docs/build-options.md`](docs/build-options.md) | 编译选项中文说明：镜像类型、文件系统、分区、GRUB、全局开关、内核选项、软件源、常用配方 |
-| [`docs/packages.md`](docs/packages.md) | 当前 422 个在装包逐条中文说明（按类别分组） |
+| [`docs/packages.md`](docs/packages.md) | 当前 421 个在装包逐条中文说明（按类别分组） |
 | [`docs/packages-optional.md`](docs/packages-optional.md) | 常用可选包：代理、DNS 过滤、下载、NAS、容器、组网、监控、命令行工具 |
-| [`docs/reference/`](docs/reference/) | 官方原始数据：11 618 个包名/版本、397 条 Kconfig 选项、官方 `.config`/feeds/profile |
+| [`docs/reference/`](docs/reference/) | 官方原始数据：11 618 个包名/版本、428 条 Kconfig 选项、官方 `.config`/feeds/profile |
 
 文档总入口：[`docs/README.md`](docs/README.md)。
 
@@ -88,7 +88,7 @@ ImageBuilder 25.12.2 装 400+ 包并按现网分区出镜像，会遇到几个�
 2. **rootfs 分区默认只有 300 MB**：未压缩 rootfs 约 436 MB，`make_ext4fs` 报 `failed to allocate ... out of space`。现已改为 20480 MiB。
 3. **20 GiB 分区写零会打满 runner**：`scripts/gen_image_generic.sh` 用 `dd if=/dev/zero` 填满整个分区，`include/image.mk` 的 `pad-to` 同样。两处都改为 `truncate` 稀疏扩展，逻辑大小不变、真实占用很小。
 4. **gzip -9 压缩 20 GiB 太慢**：镜像内容是已压缩的 xz squashfs，改为 `gzip -1`，产物大小基本不变。
-5. **默认开着 qcow2 镜像**：需要 `qemu-img`，且对刷机无用，直接 `CONFIG_QCOW2_IMAGES=n` 关掉。
+5. **默认开着 qcow2 / VDI / VMDK / VHDX / ISO 镜像和 ext4 变体**：每种格式都会把 20 GiB 分区再完整复制一遍（每份 1~5 分钟），ISO 还需要 `mkisofs`，对刷机毫无用处。现在统一关掉，只保留 squashfs 的 `combined.img.gz`（BIOS）、`combined-efi.img.gz`（UEFI）和 `rootfs.img.gz`。
 
 ## 常见问题
 

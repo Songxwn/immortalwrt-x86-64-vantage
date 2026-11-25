@@ -1,4 +1,4 @@
-# 在装软件包中文说明（422 项）
+# 在装软件包中文说明（421 项）
 
 本文件逐条说明 [`config/packages.txt`](../config/packages.txt) 里随固件打包的全部软件包。
 这份清单来自现网路由器 `192.168.31.1` 的 `/etc/apk/world`，再追加了 4 个 Vantage 主题包。
@@ -28,13 +28,13 @@
 | 下载 | 3 |
 | 监控、日志与远程运维 | 13 |
 | VPN、内网穿透与代理内核 | 3 |
-| LuCI 框架与模块 | 18 |
+| LuCI 框架与模块 | 17 |
 | LuCI 应用 | 20 |
 | LuCI 主题 | 5 |
 | 简体中文语言包 | 21 |
 | 运行库 | 72 |
 | Vantage 主题（本仓库新增） | 4 |
-| **合计** | **422** |
+| **合计** | **421** |
 
 ## 零、包选择规则与默认包替换
 
@@ -69,17 +69,17 @@ OpenWrt/ImmortalWrt 运行必需：init、ubus、uci、ubox、rpcd、uhttpd、�
 | `ucode-mod-ubus` | ucode 访问 ubus 的模块。 |
 | `ucode-mod-uci` | ucode 读写 uci 配置的模块。 |
 | `ucode-mod-uloop` | ucode 的事件循环（uloop）模块。 |
-| `libubox20251004` | OpenWrt 基础 C 库：链表、JSON、blob、uloop 事件循环。 |
-| `libubus20251017` | ubus 的 C 客户端库。 |
+| `libubox` | OpenWrt 基础 C 库：链表、JSON、blob、uloop 事件循环。 |
+| `libubus` | ubus 的 C 客户端库。 |
 | `libubus-lua` | ubus 的 Lua 绑定。 |
-| `libuci20250120` | uci 的 C 库。 |
-| `libucode20230711` | ucode 解释器运行库。 |
-| `libuclient20201210` | OpenWrt 的 HTTP/FTP 下载客户端库。 |
-| `libblobmsg-json20251004` | blobmsg 与 JSON 互转库（ubus/LuCI 常用）。 |
-| `libjson-script20251004` | JSON 脚本解析库（jshn 的底层）。 |
+| `libuci` | uci 的 C 库。 |
+| `libucode` | ucode 解释器运行库。 |
+| `libuclient` | OpenWrt 的 HTTP/FTP 下载客户端库。 |
+| `libblobmsg-json` | blobmsg 与 JSON 互转库（ubus/LuCI 常用）。 |
+| `libjson-script` | JSON 脚本解析库（jshn 的底层）。 |
 | `jshn` | 在 shell 里读写 JSON 的工具库，OpenWrt 脚本大量使用。 |
 | `jsonfilter` | 按路径提取 JSON 字段的小工具，init 脚本常用。 |
-| `jansson4` | Jansson JSON 库（aria2 等依赖）。 |
+| `jansson` | Jansson JSON 库（aria2 等依赖）。 |
 | `logd` | OpenWrt 的日志守护进程，收集内核与服务的日志。 |
 | `netifd` | 网络配置守护进程，负责接口、路由、协议脚本。 |
 | `fstools` | OpenWrt 的挂载/overlay 管理工具（`block`、`mount_root`）。 |
@@ -429,7 +429,6 @@ Web 管理界面的基础组件。这些是 LuCI 正常工作的骨架，不建�
 | `luci-lib-jsonc` | LuCI 的 JSON-C 封装。 |
 | `luci-lib-nixio` | LuCI 的 socket/文件系统库。 |
 | `luci-lib-uqr` | 二维码生成库（分享 Wi-Fi 密码用）。 |
-| `luci-lib-docker` | LuCI 的 Docker API 封装库。 |
 | `luci-proto-ipv6` | LuCI 的 IPv6 协议配置支持。 |
 | `luci-proto-ppp` | LuCI 的 PPP/PPPoE 配置支持。 |
 | `luci-proto-wireguard` | LuCI 的 WireGuard 配置支持。 |
@@ -507,76 +506,76 @@ Web 管理界面的基础组件。这些是 LuCI 正常工作的骨架，不建�
 
 | 包名 | 说明 |
 | --- | --- |
-| `libatomic1` | GCC 原子操作运行库。 |
+| `libatomic` | GCC 原子操作运行库。 |
 | `libattr` | 扩展属性（xattr）运行库。 |
 | `libavahi-client` | Avahi 客户端库。 |
 | `libavahi-dbus-support` | Avahi 的 D-Bus 支持。 |
-| `libblkid1` | 块设备标识库（lsblk/blkid 用）。 |
+| `libblkid` | 块设备标识库（lsblk/blkid 用）。 |
 | `libcap` | POSIX capabilities 库。 |
 | `libcap-ng` | 简化版 capabilities 库。 |
-| `libcomerr0` | ext2fs 错误码库。 |
-| `libcurl4` | libcurl HTTP 传输库。 |
+| `libcomerr` | ext2fs 错误码库。 |
+| `libcurl` | libcurl HTTP 传输库。 |
 | `libdaemon` | 守护进程化辅助库。 |
 | `libdbus` | D-Bus 消息总线库。 |
-| `libe2p2` | e2fsprogs 的参数解析库。 |
-| `libevent2-7` | 事件循环库（ttyd 等依赖）。 |
+| `libe2p` | e2fsprogs 的参数解析库。 |
+| `libevent2` | 事件循环库（ttyd 等依赖）。 |
 | `libexpat` | XML 解析库。 |
-| `libext2fs2` | ext2/3/4 文件系统操作库。 |
-| `libf2fs6` | F2FS 文件系统操作库。 |
-| `libfdisk1` | util-linux 分区表操作库。 |
-| `libgcc1` | GCC 运行时库。 |
+| `libext2fs` | ext2/3/4 文件系统操作库。 |
+| `libf2fs` | F2FS 文件系统操作库。 |
+| `libfdisk` | util-linux 分区表操作库。 |
+| `libgcc` | GCC 运行时库。 |
 | `libgd` | 图形绘制库（流量图、验证码等）。 |
-| `libgmp10` | 大数运算库（加密算法依赖）。 |
+| `libgmp` | 大数运算库（加密算法依赖）。 |
 | `libgnutls` | GnuTLS TLS 实现库。 |
-| `libiptext0` | iptables IPv4 扩展库。 |
-| `libiptext6-0` | iptables IPv6 扩展库。 |
-| `libiptext-nft0` | iptables 的 nftables 兼容扩展库。 |
-| `libiwinfo20230701` | 无线信息查询库（信号、速率、信道）。 |
+| `libiptext` | iptables IPv4 扩展库。 |
+| `libiptext6` | iptables IPv6 扩展库。 |
+| `libiptext-nft` | iptables 的 nftables 兼容扩展库。 |
+| `libiwinfo` | 无线信息查询库（信号、速率、信道）。 |
 | `libiwinfo-data` | iwinfo 的硬件能力数据。 |
 | `libjpeg-turbo` | JPEG 编解码库。 |
-| `libjson-c5` | JSON-C 库。 |
-| `liblua5.1.5` | Lua 5.1 运行库。 |
-| `liblucihttp0` | LuCI 的 HTTP 解析库。 |
+| `libjson-c` | JSON-C 库。 |
+| `liblua` | Lua 5.1 运行库。 |
+| `liblucihttp` | LuCI 的 HTTP 解析库。 |
 | `liblucihttp-lua` | liblucihttp 的 Lua 绑定。 |
 | `liblucihttp-ucode` | liblucihttp 的 ucode 绑定。 |
-| `liblzo2` | LZO 压缩库。 |
+| `liblzo` | LZO 压缩库。 |
 | `libminiupnpc` | UPnP 客户端库。 |
-| `libmnl0` | Netlink 最小封装库。 |
-| `libmount1` | 挂载操作库（util-linux）。 |
-| `libnatpmp1` | NAT-PMP 客户端库。 |
-| `libncurses6` | 终端界面（TUI）库。 |
-| `libnetfilter-conntrack3` | 连接跟踪用户态库。 |
+| `libmnl` | Netlink 最小封装库。 |
+| `libmount` | 挂载操作库（util-linux）。 |
+| `libnatpmp` | NAT-PMP 客户端库。 |
+| `libncurses` | 终端界面（TUI）库。 |
+| `libnetfilter-conntrack` | 连接跟踪用户态库。 |
 | `libnetsnmp-nossl` | Net-SNMP 库（不带 TLS）。 |
-| `libnettle8` | Nettle 加密库。 |
-| `libnfnetlink0` | netfilter netlink 库。 |
-| `libnftnl11` | nftables 用户态库。 |
-| `libnghttp2-14` | HTTP/2 库（curl 依赖）。 |
-| `libnl-tiny1` | 精简版 netlink 库（OpenWrt 专用）。 |
-| `libopenssl3` | OpenSSL 3 主库。 |
+| `libnettle` | Nettle 加密库。 |
+| `libnfnetlink` | netfilter netlink 库。 |
+| `libnftnl` | nftables 用户态库。 |
+| `libnghttp2` | HTTP/2 库（curl 依赖）。 |
+| `libnl-tiny` | 精简版 netlink 库（OpenWrt 专用）。 |
+| `libopenssl` | OpenSSL 3 主库。 |
 | `libopenssl-conf` | OpenSSL 配置文件支持。 |
 | `libopenssl-legacy` | OpenSSL 旧算法提供者（MD4/RC4 等）。 |
 | `libpci` | PCI 设备访问库（lspci）。 |
 | `libpcre2` | Perl 兼容正则库。 |
 | `libpng` | PNG 图像库。 |
-| `libpopt0` | 命令行选项解析库。 |
+| `libpopt` | 命令行选项解析库。 |
 | `libpthread` | POSIX 线程库（musl 下为空壳）。 |
-| `libreadline8` | 命令行行编辑库（bash 用）。 |
+| `libreadline` | 命令行行编辑库（bash 用）。 |
 | `librt` | POSIX 实时扩展库（musl 下为空壳）。 |
 | `libseccomp` | seccomp 用户态库。 |
-| `libsmartcols1` | 表格输出库（lsblk/fdisk）。 |
-| `libsqlite3-0` | SQLite 数据库库。 |
-| `libss2` | ext2fs 的子系统库。 |
-| `libstdcpp6` | GNU C++ 标准库。 |
+| `libsmartcols` | 表格输出库（lsblk/fdisk）。 |
+| `libsqlite3` | SQLite 数据库库。 |
+| `libss` | ext2fs 的子系统库。 |
+| `libstdcpp` | GNU C++ 标准库。 |
 | `libtasn1` | ASN.1 编解码库（GnuTLS 依赖）。 |
 | `libtirpc` | TI-RPC 库（NFS 等依赖）。 |
 | `libudebug` | OpenWrt 用户态调试库。 |
 | `liburing` | io_uring 用户态库。 |
-| `libustream-openssl20201210` | ustream 的 OpenSSL 实现（HTTPS 下载）。 |
-| `libuuid1` | UUID 生成库。 |
-| `libuv1` | 异步 IO 事件库。 |
+| `libustream-openssl` | ustream 的 OpenSSL 实现（HTTPS 下载）。 |
+| `libuuid` | UUID 生成库。 |
+| `libuv` | 异步 IO 事件库。 |
 | `libwebp` | WebP 图像库。 |
 | `libwebsockets-full` | 完整版 libwebsockets（WebSocket 服务）。 |
-| `libxtables12` | xtables 扩展库。 |
+| `libxtables` | xtables 扩展库。 |
 | `protobuf` | Google Protocol Buffers 运行库（netdata 等用）。 |
 | `protobuf-lite` | 精简版 Protocol Buffers 运行库。 |
 
