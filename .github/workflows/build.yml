@@ -322,6 +322,12 @@ jobs:
           set -euo pipefail
           gh release view latest >/dev/null 2>&1 || \
             gh release create latest --target "$GITHUB_SHA" --title "Latest build" --notes "自动构建"
+          # 先删掉本次不在 out/ 里的旧产物（例如版本号变了、或早前 ImageBuilder 的
+          # 无版本号镜像），否则 --clobber 只覆盖同名文件，陈旧固件会一直留在 latest。
+          keep="$(cd out && ls)" 
+          gh release view latest --json assets --jq '.assets[].name' | while read -r n; do
+            printf '%s\n' "$keep" | grep -qxF "$n" || gh release delete-asset latest "$n" --yes
+          done
           gh release upload latest out/* --clobber
           gh release edit latest \
             --title "Latest build: ImmortalWrt ${IW_VERSION} + Vantage + BBRv3" \
