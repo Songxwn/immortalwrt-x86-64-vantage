@@ -1,0 +1,5 @@
+#!/bin/sh
+# 确保首次启动后选中 Vantage 主题（uci-defaults 按文件名排序，zzzz 最后执行）
+uci -q set luci.main.mediaurlbase='/luci-static/vantage'
+uci -q commit luci
+exit 0

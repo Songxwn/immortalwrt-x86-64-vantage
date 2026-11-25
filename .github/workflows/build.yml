@@ -1,0 +1,157 @@
+name: Build ImmortalWrt 25.12 (x86/64 + Vantage)
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "ImmortalWrt 25.12.x 版本号（如 25.12.2）"
+        required: true
+        default: "25.12.2"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IB_VERSION: ${{ github.event.inputs.version || '25.12.2' }}
+  PROFILE: generic
+  VANTAGE_FEED: https://anothadev.github.io/luci-theme-vantage/25.12
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: 校验版本号
+        run: |
+          set -euo pipefail
+          case "$IB_VERSION" in
+            25.12|25.12.*) ;;
+            *) echo "::error::只支持 ImmortalWrt 25.12.x（当前：$IB_VERSION）"; exit 1 ;;
+          esac
+          echo "构建版本: $IB_VERSION"
+
+      - uses: actions/checkout@v4
+
+      - name: 安装依赖
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends zstd ca-certificates
+
+      - name: 下载 ImageBuilder
+        run: |
+          set -euo pipefail
+          BASE="https://downloads.immortalwrt.org/releases/${IB_VERSION}/targets/x86/64"
+          FILE="immortalwrt-imagebuilder-${IB_VERSION}-x86-64.Linux.x86_64.tar.zst"
+          curl -fL --retry 3 --retry-delay 5 -o "$FILE" "$BASE/$FILE"
+          curl -fL --retry 3 --retry-delay 5 -o SHA256SUMS.ib "$BASE/sha256sums"
+          grep -E "[ *]${FILE}\$" SHA256SUMS.ib | sha256sum -c -
+          tar --zstd -xf "$FILE"
+          IB="$(find . -maxdepth 1 -type d -name 'immortalwrt-imagebuilder-*' | head -n1)"
+          test -n "$IB"
+          echo "IB=$IB" >> "$GITHUB_ENV"
+          echo "ImageBuilder: $IB"
+
+      - name: 准备 Vantage 主题与签名密钥
+        run: |
+          set -euo pipefail
+          KEY_URL="https://anothadev.github.io/luci-theme-vantage/vantage-signing.pem"
+          KEY_SHA="c8a6c83eeb49ca2407932fb5e95785776128cef87db75ebaea0fe4171eee2157"
+          curl -fL --retry 3 -o vantage-signing.pem "$KEY_URL"
+          echo "${KEY_SHA}  vantage-signing.pem" | sha256sum -c -
+          mkdir -p "$IB/keys" files/etc/apk/keys files/etc/apk/repositories.d
+          cp vantage-signing.pem "$IB/keys/vantage-signing.pem"
+          cp vantage-signing.pem files/etc/apk/keys/vantage-signing.pem
+          echo "${VANTAGE_FEED}/packages.adb" > files/etc/apk/repositories.d/99-vantage.list
+          curl -fL --retry 3 -o SHA256SUMS.vantage "${VANTAGE_FEED}/SHA256SUMS"
+          for p in luci-theme-vantage luci-app-vantage luci-i18n-vantage-theme-zh-cn luci-i18n-vantage-zh-cn; do
+            f="$(awk -v p="$p" '$2 ~ "^"p"-[0-9]" {print $2}' SHA256SUMS.vantage | head -n1)"
+            if [ -z "$f" ]; then
+              echo "::warning::主题源中找不到 $p，跳过"
+              continue
+            fi
+            curl -fL --retry 3 -o "$IB/packages/$f" "${VANTAGE_FEED}/$f"
+            ( cd "$IB/packages" && grep "  ${f}\$" "$GITHUB_WORKSPACE/SHA256SUMS.vantage" | sha256sum -c - )
+          done
+          ls -lh "$IB/packages" | tail -n 8
+
+      - name: 构建固件
+        run: |
+          set -uo pipefail
+          PKGS="$(grep -vE '^[[:space:]]*(#|$)' "$GITHUB_WORKSPACE/config/packages.txt" | tr '\n' ' ')"
+          cd "$IB"
+          ok=0
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            echo "::group::第 $attempt 次构建"
+            if make image PROFILE="$PROFILE" PACKAGES="$PKGS" FILES="$GITHUB_WORKSPACE/files" 2>&1 | tee build.log; then
+              ok=1
+              echo "::endgroup::"
+              break
+            fi
+            echo "::endgroup::"
+            missing="$(grep -oE '^[[:space:]]*[A-Za-z0-9][A-Za-z0-9+._-]* \(no such package\)' build.log | awk '{print $1}' | sort -u || true)"
+            if [ -z "$missing" ]; then
+              echo "::error::构建失败，且不是缺包导致，见上方日志"
+              tail -n 80 build.log
+              exit 1
+            fi
+            echo "该版本中不存在以下包，自动剔除后重试："
+            echo "$missing"
+            for p in $missing; do
+              PKGS="$(printf ' %s ' "$PKGS" | sed "s/ $p / /g")"
+            done
+            rm -rf bin
+          done
+          if [ "$ok" != "1" ]; then
+            echo "::error::重试 10 次后仍然失败"
+            exit 1
+          fi
+          find bin/targets/x86/64 -maxdepth 1 -type f -name '*.img.gz' -printf '%f\n' | sort
+
+      - name: 收集产物
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          cp "$IB"/bin/targets/x86/64/*.img.gz out/ 2>/dev/null || true
+          cp "$IB"/bin/targets/x86/64/sha256sums out/ 2>/dev/null || true
+          test -n "$(ls -A out)"
+          ( cd out && sha256sum *.img.gz > SHA256SUMS.images )
+          ls -lh out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: immortalwrt-${{ env.IB_VERSION }}-x86-64-vantage
+          path: out/*
+          if-no-files-found: error
+
+      - name: 发布 latest Release（main 分支）
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view latest >/dev/null 2>&1 || \
+            gh release create latest --target "$GITHUB_SHA" --title "Latest build" --notes "自动构建"
+          gh release upload latest out/* --clobber
+          gh release edit latest \
+            --title "Latest build: ImmortalWrt ${IB_VERSION} + Vantage" \
+            --notes "由 GitHub Actions 自动构建（$(date -u '+%Y-%m-%d %H:%M UTC')）。
+          - 目标：x86/64 generic
+          - 主题：Vantage（含中文语言包）
+          - 刷机：UEFI 用 *combined-efi.img.gz，Legacy BIOS 用 *combined.img.gz"
+
+      - name: 打 tag 时发布 Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/*
+          generate_release_notes: true
