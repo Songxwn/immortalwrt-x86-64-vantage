@@ -89,7 +89,7 @@ Device     Boot Start      End  Sectors Size Type
 | `CONFIG_TARGET_ROOTFS_PARTSIZE` | `20480` | MiB（20 GiB），对应 sda2 |
 | `CONFIG_ISO_IMAGES` / `CONFIG_QCOW2_IMAGES` / `CONFIG_VDI/VMDK/VHDX_IMAGES` | `n` | 不需要虚拟机/光盘镜像，省时间和磁盘 |
 
-由于 20 GiB 的镜像在 CI 上不可能真实写满，workflow 会把 `scripts/gen_image_generic.sh` 和 `Image/pad-to` 的“写零填充”改成 `truncate` 稀疏扩展：文件逻辑大小仍是 20 GiB，磁盘占用只有实际内容（几百 MB），gzip 后的产物约 150 MB。构建结束前会解析 MBR，校验两个分区确实是 16 MiB / 20480 MiB。
+由于 20 GiB 的镜像在 CI 上不可能真实写满，workflow 会把 `scripts/gen_image_generic.sh` 和 `Image/pad-to` 的“写零填充”改成 `truncate` 稀疏扩展：文件逻辑大小仍是 20 GiB，磁盘占用只有实际内容（几百 MB），gzip 后的产物约 **210 MB**。构建结束前会解析 MBR，校验两个分区确实是 16 MiB / 20480 MiB。
 
 ## 自定义
 
