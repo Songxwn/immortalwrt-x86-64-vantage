@@ -9,16 +9,51 @@
 - 开发者选项：来自 [`config/Config-devel.in`](https://github.com/immortalwrt/immortalwrt/blob/openwrt-25.12/config/Config-devel.in)
 - 全部 428 个符号（含英文提示、默认值、依赖）见 [`reference/build-options-25.12.2.tsv`](reference/build-options-25.12.2.tsv)
 
-> **重要前提：ImageBuilder 能改什么**
+> **重要前提：两种构建方式能改什么**
 >
-> 本仓库用的是官方 **ImageBuilder**（只组装镜像，不重新编译内核和软件包）。
+> 本仓库有两条流程：
 >
-> - ✅ 能用：分区大小、镜像类型、GRUB 菜单、rootfs 文件系统参数、`PACKAGES` 包选择、`FILES` 覆盖文件、`DISABLED_SERVICES`。
-> - ❌ 不能用：`CONFIG_KERNEL_*`（内核已编译好）、`CONFIG_PACKAGE_*`（用 `PACKAGES` 代替）、`USE_LTO`/`USE_MKLIBS`/`SELINUX` 等需要重编软件包的选项。要改这些必须做完整源码编译（`make menuconfig` + `make`），耗时以小时计。
+> 1. **源码全量编译**（正式固件，[`build.yml`](../.github/workflows/build.yml)）——clone ImmortalWrt `v25.12.x` 源码后 `make`，**所有** `CONFIG_*` 都生效，包括内核选项和 BBRv3 内核补丁。首次约 1.5~3 小时。
+> 2. **ImageBuilder 组装**（备用快速，[`build-imagebuilder.yml`](../.github/workflows/build-imagebuilder.yml)，仅手动）——用官方预编译内核和包拼镜像，二十分钟出结果，但内核里**只有 BBRv1**。
+>
+> 下面第 1.1/1.2 节是 ImageBuilder 流程的变量；源码流程见[第零节](#零正式流程源码构建bbrv3)。第 3 节起的 `CONFIG_*` 选项在**源码流程里全部可用**，在 ImageBuilder 流程里仅其中一部分（镜像/分区/GRUB/文件系统/包选择）可用，`CONFIG_KERNEL_*` 无效。
 
 ---
 
-## 一、构建命令与变量
+## 零、正式流程：源码构建（BBRv3）
+
+### 0.1 流程概览
+
+[`.github/workflows/build.yml`](../.github/workflows/build.yml) 的步骤：
+
+1. `git clone --depth 1 --branch v25.12.x https://github.com/immortalwrt/immortalwrt.git`
+2. 在 `feeds.conf.default` 追加 Vantage 主题源，`./scripts/feeds update -a && ./scripts/feeds install -a`
+3. 把仓库 `files/` 拷进源码树的 `files/`
+4. 把 `patches/kernel/bbr3/900-*.patch` 拷进 `target/linux/generic/hack-6.12/`（由 `include/quilt.mk` 在 backport→pending→**hack**→platform 顺序中自动应用）
+5. [`ci/patch-sparse.py`](../ci/patch-sparse.py) 改 `gen_image_generic.sh` / `image.mk` / `image-commands.mk`（稀疏镜像 + `gzip -1`）
+6. [`ci/gen-config.py`](../ci/gen-config.py) 生成 `.config` → `make defconfig` → [`ci/verify-config.py`](../ci/verify-config.py) 校验
+7. `make download` → `make -j$(nproc)`（编译失败自动禁用该包并重试，最多 6 轮）
+8. 校验分区表、BBRv3（`tcp_bbr.c` 中 `BBR_VERSION 3`）、默认 bbr+fq 配置
+
+### 0.2 `.config` 从哪来
+
+不手写 Kconfig。`ci/gen-config.py` 读取：
+
+- [`config/packages.txt`](../config/packages.txt)：一行一个包名；`kmod-*` 写成 `=m`（独立 `.ko`），其余 `=y`；`-包名` 写成 `# CONFIG_PACKAGE_xxx is not set`
+- [`reference/profiles.json`](reference/profiles.json)：官方 x86/64 的默认包与设备包，一并纳入
+
+再固定写入目标平台、profile、分区、镜像类型等关键开关。生成的 `.config` 经 `make defconfig` 展开后由 `ci/verify-config.py` 检查：关键开关正确、包名全部解析（虚拟名如 `nftables` 允许由 `nftables-json` 提供），否则构建直接失败。
+
+### 0.3 BBRv3 补丁
+
+- 来源：OpenWrt PR #16414 的 19 个 6.12 补丁（提交 `94d8192c17b99ff5bc3975c00e2ed7079f6e5b89`），见 [`patches/kernel/bbr3/README.md`](../patches/kernel/bbr3/README.md)。
+- 放在 `target/linux/generic/hack-6.12/`，命名 `900-01..900-19-*.patch`，不产生新软件包。
+- `kmod-tcp-bbr` 提供模块、`kmod-sched` 提供 `fq`，`files/etc/sysctl.d/99-bbr.conf` 设 `net.ipv4.tcp_congestion_control=bbr`、`net.core.default_qdisc=fq`。
+- 只验证补丁不编译：手动运行 [`bbr3-validate.yml`](../.github/workflows/bbr3-validate.yml)。
+
+---
+
+## 一、构建命令与变量（ImageBuilder 备用流程）
 
 ### 1.1 本仓库用到的参数
 
@@ -260,7 +295,7 @@ PACKAGES="-dnsmasq dnsmasq-full luci-app-samba4 luci-i18n-samba4-zh-cn"
 
 ## 四、内核选项（摘要）
 
-`Config-kernel.in` 共 216 项，完整清单见 [`reference/build-options-25.12.2.tsv`](reference/build-options-25.12.2.tsv)。**ImageBuilder 无法修改这些**，只有完整源码编译（`make menuconfig` + `make`）才生效。
+`Config-kernel.in` 共 216 项，完整清单见 [`reference/build-options-25.12.2.tsv`](reference/build-options-25.12.2.tsv)。这些**只有源码全量编译**（`make menuconfig` + `make`，即正式流程 `build.yml`）才生效；ImageBuilder 备用流程的内核是预编译的，改不了（也因此拿不到 BBRv3）。
 
 > 注意：网卡驱动、nftables、WireGuard、overlayfs、TUN 等“看起来像内核选项”的东西，在 25.12 里是以 `kmod-*` 包的形式提供的，请通过 `PACKAGES` 选择，不要在这里找。
 
@@ -396,7 +431,7 @@ Select-String -Path docs\reference\packages-25.12.2-x86_64.tsv -Pattern 'docker'
 apk search docker
 apk info -a luci-app-dockerman
 
-# ImageBuilder 里看默认包
+# ImageBuilder 备用流程里看默认包
 make info
 ```
 
@@ -413,7 +448,15 @@ make info
 
 ### 5.4 安装第三方 apk / 自定义源
 
-ImageBuilder 支持两种方式：
+**源码流程**（正式固件）把第三方仓库作为 feed 编译进来（本仓库对 Vantage 就是这么做的）：
+
+```sh
+cd immortalwrt
+echo "src-git vantage https://github.com/anothaDev/luci-theme-vantage.git;v1.2.0" >> feeds.conf.default
+./scripts/feeds update -a && ./scripts/feeds install -a
+```
+
+**ImageBuilder 备用流程**支持两种方式：
 
 ```sh
 # 方式 1：把 apk 文件放进 ImageBuilder 的 packages/ 目录
@@ -479,12 +522,17 @@ luci-app-smartdns           # 配合 DNS 分流
 
 ### 6.4 改分区大小
 
-workflow 里改这两个值（同时改 `.config` 与 `make` 参数）：
+workflow 里改这些值（必须一致）：
 
-```yaml
-CONFIG_TARGET_KERNEL_PARTSIZE=16
-CONFIG_TARGET_ROOTFS_PARTSIZE=20480
-```
+- [`ci/gen-config.py`](../ci/gen-config.py) 生成的 `.config`：
+
+  ```text
+  CONFIG_TARGET_KERNEL_PARTSIZE=16
+  CONFIG_TARGET_ROOTFS_PARTSIZE=20480
+  ```
+
+- [`ci/verify-config.py`](../ci/verify-config.py) 的期望值校验
+- [`.github/workflows/build.yml`](../.github/workflows/build.yml) 末尾 MBR 断言
 
 改大：需要确认目标磁盘剩余空间足够；改小：sysupgrade 会截断现有 overlay，先备份。
 
@@ -502,4 +550,4 @@ CONFIG_TARGET_ROOTFS_PARTSIZE=20480
 
 ### 6.7 换 ImmortalWrt 版本
 
-workflow 的 `IB_VERSION` 支持任意 `25.12.x`；主题源目录固定为 `25.12`（`${IB_VERSION%.*}`）。升级到 25.12.3 只需改默认值或手动触发时填版本号。
+流程的 `IW_VERSION`（源码）/ `IB_VERSION`（ImageBuilder）支持任意 `25.12.x`。升级到 25.12.3 只需改默认值或手动触发时填版本号。注意 BBRv3 补丁针对内核 6.12；若大版本换到不同内核（如 6.6），需要改用对应内核的补丁系列。

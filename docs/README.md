@@ -5,7 +5,7 @@
 | 文档 | 内容 | 适合谁 |
 | --- | --- | --- |
 | [build-options.md](build-options.md) | 编译选项逐项中文说明：镜像类型、文件系统、分区、GRUB、全局编译开关、内核选项、软件源、常用定制配方 | 想改镜像结构 / 换文件系统 / 调分区的人 |
-| [packages.md](packages.md) | 当前固件里 **423 个包**逐条中文说明，按系统基础、网络、kmod、存储、容器、LuCI、运行库等分组 | 想删包瘦身 / 搞清楚某个包干什么的人 |
+| [packages.md](packages.md) | 当前固件里 **422 项**（421 个包 + 1 个移除项）逐条中文说明，按系统基础、网络、kmod、存储、容器、LuCI、运行库等分组 | 想删包瘦身 / 搞清楚某个包干什么的人 |
 | [packages-optional.md](packages-optional.md) | 25.12 官方源里**可用但未安装**的常用包：代理、DNS 过滤、下载、NAS、容器、组网、监控、命令行工具 | 想加功能的人 |
 | [reference/build-options-25.12.2.tsv](reference/build-options-25.12.2.tsv) | 从官方源码提取的 428 条 Kconfig 选项原始数据（符号、类型、英文提示、默认值、依赖） | 想精确查某个 `CONFIG_*` 的人 |
 | [reference/packages-25.12.2-x86_64.tsv](reference/packages-25.12.2-x86_64.tsv) | 25.12.2 x86-64 全部 **11 618 个包**（包名、版本、来源 feed），含 kmods | 查包名 / 确认版本的人 |
@@ -31,11 +31,11 @@
 
 ### 想改分区大小
 
-在 [`.github/workflows/build.yml`](../.github/workflows/build.yml) 里同时改这三处的值（它们必须一致）：
+分区值分三处（必须一致）：
 
-- `CONFIG_TARGET_KERNEL_PARTSIZE`（默认 `16`，单位 MiB）
-- `CONFIG_TARGET_ROOTFS_PARTSIZE`（默认 `20480`，单位 MiB）
-- 末尾“校验分区表”步骤中的断言值
+- [`ci/gen-config.py`](../ci/gen-config.py) 里的 `CONFIG_TARGET_KERNEL_PARTSIZE`（默认 `16`，单位 MiB）和 `CONFIG_TARGET_ROOTFS_PARTSIZE`（默认 `20480`，单位 MiB）
+- [`ci/verify-config.py`](../ci/verify-config.py) 中对应的期望值校验
+- [`.github/workflows/build.yml`](../.github/workflows/build.yml) 末尾“校验分区表”步骤中的断言值
 
 改完 push，构建结束时会自动解析 MBR 校验；不一致会直接失败，不会产出有问题的镜像。
 
@@ -54,19 +54,21 @@
 
 ## 关于本仓库的构建方式
 
-用的是 **ImmortalWrt 官方 ImageBuilder**，只做“组装”：下载官方预编译的内核和软件包，按清单拼成镜像。
+正式固件用的是 **ImmortalWrt 官方源码全量编译**（[`build.yml`](../.github/workflows/build.yml)）：clone `v25.12.x` 源码，装 feeds，打入 Vantage 主题和 **BBRv3 内核补丁**，再 `make` 出全部软件包与内核。
 
 这意味着：
 
-- ✅ 能改：包选择、分区大小、镜像类型、GRUB 参数、rootfs 文件系统参数、`files/` 覆盖文件。
-- ❌ 不能改：内核编译选项、软件包编译参数（LTO、musl/glibc、SELinux 策略等）。
-- 想改后者只能做完整源码编译，耗时几小时，本仓库不涉及。
+- ✅ 能改：内核编译选项、内核补丁（BBRv3）、软件包编译参数、包选择、分区大小、镜像类型、GRUB 参数、`files/` 覆盖文件。
+- ⏱️ 代价：首次约 1.5~3 小时（workflow 会缓存 `.ccache`，后续 30~60 分钟）。
+
+另有一个 **ImageBuilder 备用流程**（[`build-imagebuilder.yml`](../.github/workflows/build-imagebuilder.yml)，**仅手动触发**）：只做“组装”，用官方预编译内核和包拼镜像，二十分钟出结果，可改包/分区/镜像类型，但**内核是 BBRv1**，无法启用 BBRv3。适合只改包清单时快速验证。
 
 ## 数据是怎么来的
 
 | 文件 | 来源 |
 | --- | --- |
 | `packages.txt` | 现网路由器 `/etc/apk/world` 原样导出 + 4 个 Vantage 包 |
+| `patches/kernel/bbr3/` | OpenWrt PR #16414 的 6.12 内核补丁（提交 `94d8192c17`），重命名为 `900-01..900-19` |
 | `packages-25.12.2-x86_64.tsv` | `downloads.immortalwrt.org/releases/25.12.2/` 下各 feed 的 `index.json` + `kmods/<内核>/index.json` 合并 |
 | `build-options-25.12.2.tsv` | 从 `immortalwrt/immortalwrt` 的 `config/Config-images.in`、`Config-build.in`、`Config-kernel.in`、`target/Config.in` 解析 |
 | `config.buildinfo` / `feeds.buildinfo` / `profiles.json` | 官方 25.12.2 x86/64 发布目录 |

@@ -1,4 +1,4 @@
-# 在装软件包中文说明（423 项）
+# 在装软件包中文说明（422 项）
 
 本文件逐条说明 [`config/packages.txt`](../config/packages.txt) 里随固件打包的全部软件包。
 这份清单来自现网路由器 `192.168.31.1` 的 `/etc/apk/world`，再追加了 4 个 Vantage 主题包。
@@ -8,7 +8,7 @@
 > - 想删包：在 `config/packages.txt` 里把对应行前面加 `#` 注释掉，或直接删除该行。
 > - 想加包：先去 [`packages-25.12.2-x86_64.tsv`](reference/packages-25.12.2-x86_64.tsv) 确认 25.12.2 官方源里确实有这个包（共 11 618 条），再写进 `config/packages.txt`。
 > - 不确定某个包干什么用：先在路由器上 `apk info -a 包名` 看描述，再决定。
-> - `kmod-*` 必须与内核版本严格匹配，**不要自己指定版本号**，ImageBuilder 会从对应内核的 kmods 目录取。
+> - `kmod-*` 必须与内核版本严格匹配，**不要自己指定版本号**，源码构建会按当前内核自动编出对应模块（`=m`）。
 > - `lib*` 基本都是依赖自动带入的，手工删容易把别的包弄坏。
 
 ## 分组统计
@@ -31,14 +31,16 @@
 | LuCI 框架与模块 | 17 |
 | LuCI 应用 | 20 |
 | LuCI 主题 | 5 |
-| 简体中文语言包 | 21 |
+| 简体中文语言包 | 20 |
 | 运行库 | 72 |
 | Vantage 主题（本仓库新增） | 4 |
-| **合计** | **423** |
+| **合计** | **422** |
+
+> 合计 = 421 个「安装」条目 + 1 个「移除」条目 `-dnsmasq`（不单独成包，仅用于替换默认精简版）。
 
 ## 零、包选择规则与默认包替换
 
-这里放 `-包名` 这类“从 ImageBuilder 默认包里移除”的条目。
+这里放 `-包名` 这类“从默认包里移除”的条目（对应 `.config` 里的 `# CONFIG_PACKAGE_dnsmasq is not set`）。
 
 | 包名 | 说明 |
 | --- | --- |
@@ -235,7 +237,7 @@ x86 软路由常见网卡。装多了不影响使用，但会增加镜像体积�
 | `kmod-slhc` | PPP 的 TCP 头压缩（Van Jacobson）。 |
 | `kmod-mppe` | Microsoft MPPE 加密，PPTP VPN 用。 |
 | `kmod-button-hotplug` | 把按键事件转成 hotplug 事件（复位键等）。 |
-| `kmod-tcp-bbr` | Google BBR 拥塞控制内核模块。注意：主线内核自带的是 BBRv1（本固件即 BBRv1），BBRv3 尚未进入主线，ImageBuilder 构建无法启用 BBRv3。 |
+| `kmod-tcp-bbr` | Google BBR 拥塞控制内核模块。本固件为**源码构建**，内核已打入 BBRv3 补丁，因此这里提供的是 **BBRv3**，并由 `files/etc/sysctl.d/99-bbr.conf` 设为默认拥塞控制。 |
 | `kmod-sched` | 额外的流量调度器集合，包含 BBR 推荐的 `fq` 队列（另有 codel、sfq 等）。 |
 
 ## 五、内核模块：加密与校验
