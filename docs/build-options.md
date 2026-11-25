@@ -30,7 +30,9 @@
 | `FILES` | 覆盖文件目录，原样合并进 rootfs | `files/` |
 | `CONFIG_TARGET_KERNEL_PARTSIZE` | kernel 分区大小（MiB） | `16` |
 | `CONFIG_TARGET_ROOTFS_PARTSIZE` | rootfs 分区大小（MiB） | `20480` |
-| `CONFIG_QCOW2_IMAGES` | 是否生成 PVE/KVM 镜像 | `n` |
+| `CONFIG_QCOW2_IMAGES` / `CONFIG_VDI_IMAGES` / `CONFIG_VMDK_IMAGES` / `CONFIG_VHDX_IMAGES` | 虚拟机镜像（PVE/VirtualBox/VMware/Hyper-V） | 全部 `n` |
+| `CONFIG_ISO_IMAGES` | LiveCD ISO | `n`（需要 `mkisofs`，对刷机无用） |
+| `CONFIG_TARGET_ROOTFS_EXT4FS` | 额外生成 ext4 rootfs 变体 | `n`（只保留 squashfs） |
 | `VANTAGE_FEED` | Vantage 主题 apk 源 | `.../luci-theme-vantage/25.12` |
 
 ### 1.2 ImageBuilder 通用命令
@@ -84,11 +86,11 @@ PACKAGES="-dnsmasq dnsmasq-full luci-app-samba4 luci-i18n-samba4-zh-cn"
 | --- | --- | --- |
 | `CONFIG_GRUB_IMAGES` | `y` | 生成 BIOS/传统启动镜像（`combined.img`），本仓库的 `combined.img.gz` |
 | `CONFIG_GRUB_EFI_IMAGES` | `y` | 生成 UEFI 启动镜像（`combined-efi.img`），本仓库的 `combined-efi.img.gz` |
-| `CONFIG_ISO_IMAGES` | Buildbot 构建时 `y` | 生成 LiveCD ISO，可用于体验/救援，不适合长期运行 |
+| `CONFIG_ISO_IMAGES` | Buildbot 构建时 `y` | 生成 LiveCD ISO，可用于体验/救援，不适合长期运行（还需要 `mkisofs`），本仓库关闭 |
 | `CONFIG_QCOW2_IMAGES` | Buildbot 构建时 `y` | 生成 PVE/KVM 用的 qcow2 镜像（需要 `qemu-img`），本仓库关闭 |
-| `CONFIG_VDI_IMAGES` | Buildbot 构建时 `y` | 生成 VirtualBox VDI 镜像 |
-| `CONFIG_VMDK_IMAGES` | Buildbot 构建时 `y` | 生成 VMware VMDK 镜像 |
-| `CONFIG_VHDX_IMAGES` | Buildbot 构建时 `y` | 生成 Hyper-V VHDX 镜像 |
+| `CONFIG_VDI_IMAGES` | Buildbot 构建时 `y` | 生成 VirtualBox VDI 镜像，本仓库关闭 |
+| `CONFIG_VMDK_IMAGES` | Buildbot 构建时 `y` | 生成 VMware VMDK 镜像，本仓库关闭 |
+| `CONFIG_VHDX_IMAGES` | Buildbot 构建时 `y` | 生成 Hyper-V VHDX 镜像，本仓库关闭 |
 | `CONFIG_TARGET_IMAGES_GZIP` | `y` | 镜像额外做 gzip 压缩（`*.img.gz`） |
 | `CONFIG_TARGET_SERIAL` | `ttyS0` | 串口控制台设备名（x86/armsr/loongarch64） |
 
@@ -168,7 +170,7 @@ PACKAGES="-dnsmasq dnsmasq-full luci-app-samba4 luci-i18n-samba4-zh-cn"
 | --- | --- | --- |
 | `CONFIG_ALL` | `n` | 选中所有用户态软件包（镜像巨大，仅调试用） |
 | `CONFIG_ALL_KMODS` | `n` | 选中所有内核模块 |
-| `CONFIG_ALL_NONSHARED` | `n` | 选中所有目标平台专属包（会连带 `ALL_KMODS`） |
+| `CONFIG_ALL_NONSHARED` | 官方 Buildbot 构建时 `y` | 选中所有目标平台专属包（会连带 `ALL_KMODS`） |
 
 > 本仓库不使用这三个选项，而是在 `config/packages.txt` 里精确列出需要的包。
 
