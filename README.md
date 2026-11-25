@@ -44,3 +44,16 @@ sysupgrade -n /tmp/immortalwrt-x86-64-generic-squashfs-combined-efi.img.gz
 - 若某些包在 25.12 中不存在（如部分仅存在于 snapshot 的插件），构建脚本会自动剔除并在日志中列出，不会导致整体失败。
 - Vantage 的签名公钥会装进固件 `/etc/apk/keys/`，并把主题源写入 `/etc/apk/repositories.d/99-vantage.list`，之后可在路由上 `apk update && apk upgrade` 单独升级主题。
 - 首次启动由 `files/etc/uci-defaults/zzzz-vantage-theme` 强制选中 Vantage 主题。
+
+## 构建时做的两处修补
+
+ImageBuilder 25.12.2 直接装 400+ 包会遇到两个坑，workflow 里已自动处理：
+
+1. **`include/rootfs.mk` 空命令 bug**：ImageBuilder 模式下 `$(if $(IB),,awk ...)` 展开为空，生成 `then  ;` 造成 `syntax error near unexpected token ';'`。补丁把空分支改成 `:`。
+2. **rootfs 分区默认只有 300 MB**：未压缩 rootfs 约 436 MB，`make_ext4fs` 报 `failed to allocate ... out of space`。已把 `CONFIG_TARGET_ROOTFS_PARTSIZE` 调到 1024 MB。
+
+## 常见问题
+
+- **构建卡在下载**：ImmortalWrt 镜像站偶尔限速，重跑即可；脚本带 `--retry`。
+- **刷完没有 Vantage**：确认刷的是本仓库产物，并在刷机时清除浏览器缓存后重新登录 LuCI。
+- **想换 24.10**：本仓库只针对 25.12（apk 体系、主题 25.12 包）。24.10 需要改用 `.ipk` 主题包，不属于当前流程。
