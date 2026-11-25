@@ -51,7 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           BASE="https://downloads.immortalwrt.org/releases/${IB_VERSION}/targets/x86/64"
-          FILE="immortalwrt-imagebuilder-${IB_VERSION}-x86-64.Linux.x86_64.tar.zst"
+          FILE="immortalwrt-imagebuilder-${IB_VERSION}-x86-64.Linux-x86_64.tar.zst"
           curl -fL --retry 3 --retry-delay 5 -o "$FILE" "$BASE/$FILE"
           curl -fL --retry 3 --retry-delay 5 -o SHA256SUMS.ib "$BASE/sha256sums"
           grep -E "[ *]${FILE}\$" SHA256SUMS.ib | sha256sum -c -
