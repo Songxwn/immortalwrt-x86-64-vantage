@@ -140,7 +140,9 @@ jobs:
           ok=0
           for attempt in 1 2 3 4 5 6; do
             echo "::group::第 $attempt 次编译"
-            if make -j"$(nproc)" 2>&1 | tee "$LOG"; then
+            # EXTRA_IMAGE_NAME 是 include/image.mk 直接读取的 make 变量，会把版本号
+            # 放进产物文件名（immortalwrt-25.12.2-x86-64-generic-*），与官方一致。
+            if make -j"$(nproc)" EXTRA_IMAGE_NAME="$IW_VERSION" 2>&1 | tee "$LOG"; then
               ok=1; echo "::endgroup::"; break
             fi
             echo "::endgroup::"
@@ -188,6 +190,17 @@ jobs:
           name: immortalwrt-${{ env.IW_VERSION }}-x86-64-vantage-bbrv3
           path: out/*
           if-no-files-found: error
+
+      - name: 校验镜像文件名带版本号（与官方命名一致）
+        run: |
+          set -euo pipefail
+          for t in combined combined-efi rootfs; do
+            f="out/immortalwrt-${IW_VERSION}-x86-64-generic-squashfs-${t}.img.gz"
+            test -f "$f" || { echo "::error::缺少 $f（EXTRA_IMAGE_NAME 未生效？）"; ls -1 out; exit 1; }
+          done
+          test -f "out/immortalwrt-${IW_VERSION}-x86-64-generic.manifest" || {
+            echo "::error::缺少版本化的 manifest"; ls -1 out; exit 1; }
+          echo "产物文件名已带版本号 ${IW_VERSION}"
 
       - name: 校验分区表（对齐现网 16 MiB + 20 GiB）
         run: |
