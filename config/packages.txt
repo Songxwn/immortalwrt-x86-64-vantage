@@ -318,7 +318,6 @@ luci-i18n-argon-config-zh-cn
 luci-i18n-aria2-zh-cn
 luci-i18n-base-zh-cn
 luci-i18n-dockerman-zh-cn
-luci-i18n-docker-zh-cn
 luci-i18n-filebrowser-zh-cn
 luci-i18n-firewall-zh-cn
 luci-i18n-homeproxy-zh-cn
