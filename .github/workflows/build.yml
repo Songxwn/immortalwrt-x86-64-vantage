@@ -1,9 +1,7 @@
-name: Build ImmortalWrt 25.12 源码 (x86/64 + Vantage)
+name: Build ImmortalWrt 25.12 源码 (x86/64 + Vantage + BBRv3)
 
-# 从 ImmortalWrt 源码全量构建，内核用官方自带版本（BBR v1），不打内核补丁。
+# 从 ImmortalWrt 源码全量构建，并打入 BBRv3 内核补丁（主线只有 BBRv1）。
 # 这是正式固件流程；ImageBuilder 快速流程见 build-imagebuilder.yml（手动触发）。
-# 想恢复 BBRv3：把 patches/kernel/bbr3/900-*.patch 拷进 target/linux/generic/hack-6.12/
-# （原「打入 BBRv3 内核补丁」步骤，见 git 历史），并去掉下面的「确认内核为原生 BBR」校验。
 on:
   push:
     branches: [main]
@@ -48,7 +46,7 @@ jobs:
             25.12|25.12.*) ;;
             *) echo "::error::只支持 ImmortalWrt 25.12.x（当前：$IW_VERSION）"; exit 1 ;;
           esac
-          echo "构建版本: $IW_VERSION（源码全量构建，原生内核）"
+          echo "构建版本: $IW_VERSION（源码全量构建 + BBRv3）"
 
       - uses: actions/checkout@v7
 
@@ -99,6 +97,14 @@ jobs:
           rm -rf "$IW_DIR/files"
           cp -a "$GITHUB_WORKSPACE/files" "$IW_DIR/files"
           find "$IW_DIR/files" -type f
+
+      - name: 打入 BBRv3 内核补丁（OpenWrt PR #16414）
+        run: |
+          set -euo pipefail
+          DEST="$IW_DIR/target/linux/generic/hack-6.12"
+          test -d "$DEST" || { echo "::error::找不到 $DEST"; exit 1; }
+          cp "$GITHUB_WORKSPACE"/patches/kernel/bbr3/900-*.patch "$DEST/"
+          echo "已放入 $(ls -1 "$DEST"/900-*.patch | wc -l) 个 BBRv3 补丁"
 
       - name: 修补镜像脚本（稀疏镜像 / gzip -1）
         run: python3 "$GITHUB_WORKSPACE/ci/patch-sparse.py" "$IW_DIR"
@@ -198,7 +204,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: immortalwrt-${{ env.IW_VERSION }}-x86-64-vantage
+          name: immortalwrt-${{ env.IW_VERSION }}-x86-64-vantage-bbrv3
           path: out/*
           if-no-files-found: error
 
@@ -245,21 +251,18 @@ jobs:
           print("分区表与现网设备一致")
           PY
 
-      - name: 确认内核为原生 BBR（未打 BBRv3 补丁）
+      - name: 校验 BBRv3 已进入 target 内核
         run: |
           set -euo pipefail
+          n="$(ls -1 "$IW"/target/linux/generic/hack-6.12/900-*.patch 2>/dev/null | wc -l)"
+          test "$n" = "19" || { echo "::error::BBRv3 补丁数量为 $n，应为 19"; exit 1; }
           SRC="$(ls -d "$IW"/build_dir/target-*/linux-*/linux-6.12.*/ 2>/dev/null | head -n1)"
           test -n "$SRC" || { echo "::error::找不到 target 内核源码目录"; exit 1; }
           echo "target 内核源码: $SRC"
-          # 主线 tcp_bbr.c 没有 BBR_VERSION 宏；出现它就是 BBRv3 补丁被重新打上了。
-          if grep -q 'BBR_VERSION' "$SRC/net/ipv4/tcp_bbr.c"; then
-            grep -n 'BBR_VERSION' "$SRC/net/ipv4/tcp_bbr.c" || true
-            echo "::error::内核里出现 BBR_VERSION，说明 BBRv3 补丁仍被应用"
-            exit 1
-          fi
-          n="$(find "$IW/target/linux/generic/hack-6.12" -maxdepth 1 -name '900-*.patch' 2>/dev/null | wc -l || true)"
-          test "$n" = "0" || { echo "::error::hack-6.12 里仍有 $n 个 900-*.patch（BBRv3）"; exit 1; }
-          echo "内核使用官方自带 BBR（v1），未打 BBRv3 补丁"
+          grep -n 'define BBR_VERSION' "$SRC/net/ipv4/tcp_bbr.c"
+          grep -q 'BBR_VERSION[[:space:]]*3' "$SRC/net/ipv4/tcp_bbr.c" || {
+            echo "::error::内核里的 tcp_bbr.c 不是 v3（未找到 BBR_VERSION 3）"; exit 1; }
+          echo "target 内核源码已确认 BBRv3"
 
       - name: 校验内核模块与 packages.txt 已装进固件
         run: |
@@ -357,10 +360,10 @@ jobs:
           done
           gh release upload latest out/* --clobber
           gh release edit latest \
-            --title "Latest build: ImmortalWrt ${IW_VERSION} + Vantage" \
+            --title "Latest build: ImmortalWrt ${IW_VERSION} + Vantage + BBRv3" \
             --notes "由 GitHub Actions 源码全量构建（$(date -u '+%Y-%m-%d %H:%M UTC')）。
           - 目标：x86/64 generic（分区 16 MiB kernel + 20 GiB rootfs，与现网设备一致）
-          - 内核：Linux 6.12.103（官方原生内核，未打补丁），默认拥塞控制 bbr + fq
+          - 内核：Linux 6.12.103 + **BBRv3** 补丁（OpenWrt PR #16414），默认拥塞控制 bbr + fq
           - 主题：Vantage 1.2.x（含中文语言包）
           - 刷机：UEFI 用 *combined-efi.img.gz，Legacy BIOS 用 *combined.img.gz
           - 查看已装包：Release 里的 *.manifest"

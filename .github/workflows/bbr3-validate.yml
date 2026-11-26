@@ -1,8 +1,7 @@
-name: 校验 BBRv3 内核补丁（可选）
+name: 校验 BBRv3 内核补丁
 
-# 仅手动触发，与正式构建无关：正式固件用的是内核自带的 BBR（v1），不打这套补丁。
-# 这里只用于「将来想启用 BBRv3」时先确认补丁能干净应用：
-# 把 ImmortalWrt 的内核补丁依次打到 linux-6.12.103 上，再打本仓库的 900-*.patch。
+# 只在手动触发时运行：把 ImmortalWrt 的内核补丁依次打到 linux-6.12.103 上，
+# 再打本仓库的 900-*.patch，确认 BBRv3 补丁能干净应用。
 on:
   workflow_dispatch:
 

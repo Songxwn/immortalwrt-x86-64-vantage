@@ -1,8 +1,5 @@
 # BBRv3 内核补丁（来自 OpenWrt PR #16414）
 
-> **当前默认不启用**：`build.yml` 不再把这些补丁拷进 `hack-6.12/`，正式固件用的是内核自带的 BBR（v1）。
-> 需要 BBRv3 时再按下面的说明手动启用（详见仓库根 `README.md` 的「拥塞控制（BBR）」一节）。补丁本身仍然保留在这里备用。
-
 - 来源：<https://github.com/openwrt/openwrt/pull/16414>（作者 nasbdh9，Draft）
 - 抓取时的 PR head commit：`94d8192c17b99ff5bc3975c00e2ed7079f6e5b89`
 - 原路径：`target/linux/generic/hack-6.12/601-*.patch`

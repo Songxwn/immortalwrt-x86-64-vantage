@@ -54,21 +54,21 @@
 
 ## 关于本仓库的构建方式
 
-正式固件用的是 **ImmortalWrt 官方源码全量编译**（[`build.yml`](../.github/workflows/build.yml)）：clone `v25.12.x` 源码，装 feeds，加入 Vantage 主题，再 `make` 出全部软件包与内核（内核用官方原版，不打补丁）。
+正式固件用的是 **ImmortalWrt 官方源码全量编译**（[`build.yml`](../.github/workflows/build.yml)）：clone `v25.12.x` 源码，装 feeds，打入 Vantage 主题和 **BBRv3 内核补丁**，再 `make` 出全部软件包与内核。
 
 这意味着：
 
-- ✅ 能改：内核编译选项、软件包编译参数、包选择、分区大小、镜像类型、GRUB 参数、`files/` 覆盖文件。
+- ✅ 能改：内核编译选项、内核补丁（BBRv3）、软件包编译参数、包选择、分区大小、镜像类型、GRUB 参数、`files/` 覆盖文件。
 - ⏱️ 代价：首次约 2~2.5 小时；workflow 会缓存 `.ccache`，之后约 70 分钟（实测 69~74 分钟，命中率 97%~99%）。
 
-另有一个 **ImageBuilder 备用流程**（[`build-imagebuilder.yml`](../.github/workflows/build-imagebuilder.yml)，**仅手动触发**）：只做“组装”，用官方预编译内核和包拼镜像，二十分钟出结果，可改包/分区/镜像类型，但内核就是官方预编译内核。适合只改包清单时快速验证。
+另有一个 **ImageBuilder 备用流程**（[`build-imagebuilder.yml`](../.github/workflows/build-imagebuilder.yml)，**仅手动触发**）：只做“组装”，用官方预编译内核和包拼镜像，二十分钟出结果，可改包/分区/镜像类型，但**内核是 BBRv1**，无法启用 BBRv3。适合只改包清单时快速验证。
 
 ## 数据是怎么来的
 
 | 文件 | 来源 |
 | --- | --- |
 | `packages.txt` | 现网路由器 `/etc/apk/world` 原样导出 + 4 个 Vantage 包 |
-| `patches/kernel/bbr3/` | OpenWrt PR #16414 的 6.12 内核补丁（提交 `94d8192c17`），重命名为 `900-01..900-19`；**默认不用**，需要 BBRv3 时手动启用 |
+| `patches/kernel/bbr3/` | OpenWrt PR #16414 的 6.12 内核补丁（提交 `94d8192c17`），重命名为 `900-01..900-19` |
 | `packages-25.12.2-x86_64.tsv` | `downloads.immortalwrt.org/releases/25.12.2/` 下各 feed 的 `index.json` + `kmods/<内核>/index.json` 合并 |
 | `build-options-25.12.2.tsv` | 从 `immortalwrt/immortalwrt` 的 `config/Config-images.in`、`Config-build.in`、`Config-kernel.in`、`target/Config.in` 解析 |
 | `config.buildinfo` / `feeds.buildinfo` / `profiles.json` | 官方 25.12.2 x86/64 发布目录 |

@@ -1,8 +1,8 @@
 name: (备用) ImageBuilder 快速构建 x86/64 + Vantage
 
-# 仅手动触发。日常使用源码构建（build.yml），可以改内核选项与版本细节；
-# 这里保留 ImageBuilder 流程，用于「只改包清单、二十分钟出固件」的快速验证。
-# 两条流程的内核现在都是官方原版（BBR v1）。
+# 仅手动触发。日常使用源码构建（build.yml），它才能带上 BBRv3；
+# 这里保留 ImageBuilder 流程，用于「只改包清单、二十分钟出固件」的快速验证，
+# 但它用的是主线内核的 BBRv1，没有 BBRv3。
 on:
   workflow_dispatch:
     inputs:
@@ -267,14 +267,14 @@ jobs:
             gh release create imagebuilder --target "$GITHUB_SHA" --title "ImageBuilder build" --notes "自动构建"
           gh release upload imagebuilder out/* --clobber
           gh release edit imagebuilder \
-            --title "ImageBuilder: ImmortalWrt ${IB_VERSION} + Vantage" \
+            --title "ImageBuilder: ImmortalWrt ${IB_VERSION} + Vantage（BBRv1）" \
             --notes "由 GitHub Actions 的 ImageBuilder 备用流程构建（$(date -u '+%Y-%m-%d %H:%M UTC')）。
           - 目标：x86/64 generic
           - 主题：Vantage（含中文语言包）
-          - 拥塞控制：内核自带 BBR（v1），默认 bbr + fq
+          - 拥塞控制：主线 BBRv1（**不是** BBRv3）
           - 刷机：UEFI 用 *combined-efi.img.gz，Legacy BIOS 用 *combined.img.gz
 
-          正式固件请用 latest Release（源码全量构建）。"
+          正式固件请用 latest Release（源码构建，含 BBRv3）。"
 
       - name: 打 tag 时发布 Release
         if: startsWith(github.ref, 'refs/tags/')
