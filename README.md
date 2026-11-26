@@ -1,15 +1,15 @@
-# ImmortalWrt x86/64 + Vantage + BBRv3 自动构建
+# ImmortalWrt x86/64 + Vantage 自动构建
 
-用 **GitHub Actions 从 ImmortalWrt 源码全量编译** 固件，全部在云端完成，本地不需要任何环境。内核额外打入 **BBRv3** 补丁（主线内核只有 BBRv1）。
+用 **GitHub Actions 从 ImmortalWrt 源码全量编译** 固件，全部在云端完成，本地不需要任何环境。内核使用 ImmortalWrt 官方自带的内核（Linux 6.12.103，**BBR v1**），不打任何内核补丁。
 
-| 版本 | 构建方式 | 拥塞控制 | 触发方式 |
+| 版本 | 构建方式 | 内核 | 触发方式 |
 | --- | --- | --- | --- |
-| **正式固件** | 源码全量编译（[`build.yml`](.github/workflows/build.yml)） | **BBRv3** | push `main` / tag / 手动 |
-| 备用快速验证 | ImageBuilder 组装（[`build-imagebuilder.yml`](.github/workflows/build-imagebuilder.yml)） | BBRv1 | **仅手动** |
+| **正式固件** | 源码全量编译（[`build.yml`](.github/workflows/build.yml)） | Linux 6.12.103（官方原生） | push `main` / tag / 手动 |
+| 备用快速验证 | ImageBuilder 组装（[`build-imagebuilder.yml`](.github/workflows/build-imagebuilder.yml)） | 官方预编译内核 | **仅手动** |
 
 - 目标平台：`x86/64`，profile `generic`（适配 CncTion J4125-4L 等 x86 软路由）
 - 基础版本：ImmortalWrt **25.12.x**（默认 25.12.2，apk 包管理；源码用同名 git tag）
-- 内核：Linux **6.12.103** + BBRv3 补丁（[OpenWrt PR #16414](https://github.com/openwrt/openwrt/pull/16414)，19 个补丁，见 [`patches/kernel/bbr3/`](patches/kernel/bbr3/)）
+- 内核：Linux **6.12.103**（官方源码，未打补丁）。BBRv3 补丁仍保留在 [`patches/kernel/bbr3/`](patches/kernel/bbr3/)，但**默认不应用**，需要时按[下方说明](#拥塞控制bbr)手动启用
 - 拥塞控制：默认 `bbr` + `fq`，由 `files/etc/sysctl.d/99-bbr.conf` 生效，`kmod-tcp-bbr` / `kmod-sched` 随固件安装
 - 主题：[Vantage](https://github.com/anothaDev/luci-theme-vantage) 1.2.x（feed 方式编译）+ 中文语言包，已设为默认主题
 - 包清单：来自现网路由 `/etc/apk/world`（421 个包 + 移除 `dnsmasq`），见 [`config/packages.txt`](config/packages.txt)
@@ -58,18 +58,19 @@ sysupgrade -n /tmp/immortalwrt-25.12.2-x86-64-generic-squashfs-combined-efi.img.
 >
 > 镜像的 rootfs 分区是 20 GiB，sysupgrade 会按分区表整盘写入，写入量约 20 GiB（SSD 上通常 1~3 分钟），期间不要断电。
 
-## BBRv3
+## 拥塞控制（BBR）
 
-主线 Linux 只带 **BBRv1**（`net/ipv4/tcp_bbr.c`），BBRv3 需要打补丁。本仓库的做法：
+默认拥塞控制是 **`bbr` + `fq`**，由 [`files/etc/sysctl.d/99-bbr.conf`](files/etc/sysctl.d/99-bbr.conf) 写入，`kmod-tcp-bbr` / `kmod-sched` 随固件安装。
 
-- 补丁源：[OpenWrt PR #16414](https://github.com/openwrt/openwrt/pull/16414) 的 19 个 `601-*.patch`（针对 6.12），落在 `target/linux/generic/hack-6.12/`，本仓库重命名为 `900-01..900-19`。
-- 版本固定：抓取自 PR head 提交 `94d8192c17b99ff5bc3975c00e2ed7079f6e5b89`，见 [`patches/kernel/bbr3/README.md`](patches/kernel/bbr3/README.md)。
-- 应用顺序由 `include/quilt.mk` 决定：backport → pending → **hack** → platform，`scripts/patch-kernel.sh` 用 `patch -f -p1`（默认 fuzz=2）。
-- 补丁只改内核，不产生额外软件包；`CONFIG_PACKAGE_kmod-tcp-bbr` 与 `kmod-sched` 提供模块与 `fq` 队列。
-- 构建时会**自动校验**：内核源码 `net/ipv4/tcp_bbr.c` 里必须出现 `BBR_VERSION 3`，否则构建失败，避免“以为刷了 BBRv3 实际还是 BBRv1”。
-- 想单独验证补丁能否干净应用，可手动运行 [`bbr3-validate.yml`](.github/workflows/bbr3-validate.yml)（只打补丁不编译，几分钟出结果）。
+这里用的是 **内核自带实现（BBRv1）**，没有打任何内核补丁 —— 编译更快、更稳，也更好追官方版本。
 
-> 为什么不用 ImageBuilder：ImageBuilder 只组装官方**预编译内核**，无法改内核源码，因此拿不到 BBRv3（只有 BBRv1）。备用流程 `build-imagebuilder.yml` 仍保留，适合改包清单后二十分钟快速验证。
+想改用 **BBRv3**（[OpenWrt PR #16414](https://github.com/openwrt/openwrt/pull/16414)，19 个 6.12 补丁，已备在 [`patches/kernel/bbr3/`](patches/kernel/bbr3/)）：
+
+1. 在 `build.yml` 的「修补镜像脚本」步骤前加回拷贝步骤（`git log -S'900-*.patch' -- .github/workflows/build.yml` 可找回原文）；
+2. 删掉「确认内核为原生 BBR（未打 BBRv3 补丁）」这一步；
+3. 想先验证补丁能否干净应用，手动运行 [`bbr3-validate.yml`](.github/workflows/bbr3-validate.yml)（只打补丁不编译，几分钟出结果）。
+
+> BBRv3 只影响**本机发包**的拥塞控制算法；多数家用场景下 BBRv1 与 v3 的差别远小于链路本身的差异。取消 BBRv3 后内核编译量不变（内核无论如何都要完整编译一遍），主要收益是少一层补丁维护风险。
 
 ## 分区布局
 
@@ -99,7 +100,7 @@ Device     Boot Start      End  Sectors Size Type
   - 若某个包名不存在或依赖不满足，[`ci/verify-config.py`](ci/verify-config.py) 会在编译前直接报错（虚拟名如 `nftables` 由 `nftables-json` 提供会自动识别）。
 - 覆盖文件：放进 [`files/`](files/)，会原样合并进固件（如 `files/etc/uci-defaults/`）。
 - 换主题版本：修改 workflow 中 `VANTAGE_REF`（默认 `v1.2.0`）。
-- 换 BBRv3 补丁：替换 [`patches/kernel/bbr3/900-*.patch`](patches/kernel/bbr3/)，用 `bbr3-validate.yml` 先验证。
+- 换 BBRv3：见[拥塞控制](#拥塞控制bbr)一节；补丁在 [`patches/kernel/bbr3/900-*.patch`](patches/kernel/bbr3/)，先用 `bbr3-validate.yml` 验证。
 
 ## 说明
 
@@ -122,5 +123,5 @@ Device     Boot Start      End  Sectors Size Type
 - **构建卡在下载 / 下载失败**：ImmortalWrt 镜像站偶尔限速，重跑即可；`make download` 阶段允许部分失败，编译阶段会重试。
 - **首次构建很慢**：源码全量编译正常需要 2~2.5 小时；之后有 ccache 缓存约 **70~75 分钟**（实测命中率约 99%）。ccache 的缓存目录是源码树的 `.ccache/`，缓存命中情况会在编译日志的 “ccache 编译前/后状态” 里打印。
 - **刷完没有 Vantage**：确认刷的是本仓库产物，并在刷机时清除浏览器缓存后重新登录 LuCI。
-- **想确认是不是 BBRv3**：看构建日志里 “校验 BBRv3 已进入 target 内核” 与 “校验内核模块与 packages.txt 已装进固件” 这两步；或 SSH 上路由后 `sysctl net.ipv4.tcp_congestion_control`（应为 `bbr`）、`lsmod | grep tcp_bbr`，再 `dmesg | grep -i bbr` 看版本。
-- **想换 24.10**：本仓库只针对 25.12（apk 体系、主题 25.12 包）。24.10 需要改用 `.ipk` 主题包，且 BBRv3 补丁要换 6.6 版本，不属于当前流程。
+- **想确认拥塞控制**：看构建日志里「校验默认 BBR 配置（bbr + fq）」与「校验内核模块与 packages.txt 已装进固件」这两步；或 SSH 上路由后 `sysctl net.ipv4.tcp_congestion_control`（应为 `bbr`）、`sysctl net.core.default_qdisc`（应为 `fq`）、`lsmod | grep tcp_bbr`。
+- **想换 24.10**：本仓库只针对 25.12（apk 体系、主题 25.12 包）。24.10 需要改用 `.ipk` 主题包，不属于当前流程。

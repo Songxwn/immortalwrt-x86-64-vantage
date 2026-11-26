@@ -237,7 +237,7 @@ x86 软路由常见网卡。装多了不影响使用，但会增加镜像体积�
 | `kmod-slhc` | PPP 的 TCP 头压缩（Van Jacobson）。 |
 | `kmod-mppe` | Microsoft MPPE 加密，PPTP VPN 用。 |
 | `kmod-button-hotplug` | 把按键事件转成 hotplug 事件（复位键等）。 |
-| `kmod-tcp-bbr` | Google BBR 拥塞控制内核模块。本固件为**源码构建**，内核已打入 BBRv3 补丁，因此这里提供的是 **BBRv3**，并由 `files/etc/sysctl.d/99-bbr.conf` 设为默认拥塞控制。 |
+| `kmod-tcp-bbr` | Google BBR 拥塞控制内核模块（内核自带实现，BBR v1）。由 `files/etc/sysctl.d/99-bbr.conf` 设为默认拥塞控制，配合 `fq` 队列。 |
 | `kmod-sched` | 额外的流量调度器集合，包含 BBR 推荐的 `fq` 队列（另有 codel、sfq 等）。 |
 
 ## 五、内核模块：加密与校验

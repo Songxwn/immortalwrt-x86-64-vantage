@@ -13,14 +13,14 @@
 >
 > 本仓库有两条流程：
 >
-> 1. **源码全量编译**（正式固件，[`build.yml`](../.github/workflows/build.yml)）——clone ImmortalWrt `v25.12.x` 源码后 `make`，**所有** `CONFIG_*` 都生效，包括内核选项和 BBRv3 内核补丁。首次约 2~2.5 小时，之后有 ccache 约 70~75 分钟（实测命中率约 99%）。
+> 1. **源码全量编译**（正式固件，[`build.yml`](../.github/workflows/build.yml)）——clone ImmortalWrt `v25.12.x` 源码后 `make`，**所有** `CONFIG_*` 都生效，包括内核选项。首次约 2~2.5 小时，之后有 ccache 约 70~75 分钟（实测命中率约 99%）。
 > 2. **ImageBuilder 组装**（备用快速，[`build-imagebuilder.yml`](../.github/workflows/build-imagebuilder.yml)，仅手动）——用官方预编译内核和包拼镜像，二十分钟出结果，但内核里**只有 BBRv1**。
 >
-> 下面第 1.1/1.2 节是 ImageBuilder 流程的变量；源码流程见[第零节](#零正式流程源码构建bbrv3)。第 3 节起的 `CONFIG_*` 选项在**源码流程里全部可用**，在 ImageBuilder 流程里仅其中一部分（镜像/分区/GRUB/文件系统/包选择）可用，`CONFIG_KERNEL_*` 无效。
+> 下面第 1.1/1.2 节是 ImageBuilder 流程的变量；源码流程见[第零节](#零正式流程源码构建)。第 3 节起的 `CONFIG_*` 选项在**源码流程里全部可用**，在 ImageBuilder 流程里仅其中一部分（镜像/分区/GRUB/文件系统/包选择）可用，`CONFIG_KERNEL_*` 无效。
 
 ---
 
-## 零、正式流程：源码构建（BBRv3）
+## 零、正式流程：源码构建
 
 ### 0.1 流程概览
 
@@ -28,12 +28,11 @@
 
 1. `git clone --depth 1 --branch v25.12.x https://github.com/immortalwrt/immortalwrt.git`
 2. 在 `feeds.conf.default` 追加 Vantage 主题源，`./scripts/feeds update -a && ./scripts/feeds install -a`
-3. 把仓库 `files/` 拷进源码树的 `files/`
-4. 把 `patches/kernel/bbr3/900-*.patch` 拷进 `target/linux/generic/hack-6.12/`（由 `include/quilt.mk` 在 backport→pending→**hack**→platform 顺序中自动应用）
-5. [`ci/patch-sparse.py`](../ci/patch-sparse.py) 改 `gen_image_generic.sh` / `image.mk` / `image-commands.mk`（稀疏镜像 + `gzip -1`）
-6. [`ci/gen-config.py`](../ci/gen-config.py) 生成 `.config` → `make defconfig` → [`ci/verify-config.py`](../ci/verify-config.py) 校验
-7. `make download` → `make -j$(nproc) EXTRA_IMAGE_NAME="$IW_VERSION"`（`EXTRA_IMAGE_NAME` 把版本号写进产物文件名，得到与官方一致的 `immortalwrt-25.12.2-x86-64-generic-*`；编译失败自动禁用该包并重试，最多 6 轮）
-8. 校验产物文件名、分区表、BBRv3（`tcp_bbr.c` 中 `BBR_VERSION 3`）、默认 bbr+fq 配置
+3. 把仓库 `files/` 拷进源码树的 `files/`（内核不打补丁，用官方原版）
+4. [`ci/patch-sparse.py`](../ci/patch-sparse.py) 改 `gen_image_generic.sh` / `image.mk` / `image-commands.mk`（稀疏镜像 + `gzip -1`）
+5. [`ci/gen-config.py`](../ci/gen-config.py) 生成 `.config` → `make defconfig` → [`ci/verify-config.py`](../ci/verify-config.py) 校验
+6. `make download` → `make -j$(nproc) EXTRA_IMAGE_NAME="$IW_VERSION"`（`EXTRA_IMAGE_NAME` 把版本号写进产物文件名，得到与官方一致的 `immortalwrt-25.12.2-x86-64-generic-*`；编译失败自动禁用该包并重试，最多 6 轮）
+7. 校验产物文件名、分区表、内核未被改动（`tcp_bbr.c` 中不出现 `BBR_VERSION`）、默认 bbr+fq 配置
 
 ### 0.2 `.config` 从哪来
 
@@ -44,11 +43,11 @@
 
 再固定写入目标平台、profile、分区、镜像类型等关键开关。生成的 `.config` 经 `make defconfig` 展开后由 `ci/verify-config.py` 检查：关键开关正确、包名全部解析（虚拟名如 `nftables` 允许由 `nftables-json` 提供），否则构建直接失败。
 
-### 0.3 BBRv3 补丁
+### 0.3 拥塞控制（BBR）
 
-- 来源：OpenWrt PR #16414 的 19 个 6.12 补丁（提交 `94d8192c17b99ff5bc3975c00e2ed7079f6e5b89`），见 [`patches/kernel/bbr3/README.md`](../patches/kernel/bbr3/README.md)。
-- 放在 `target/linux/generic/hack-6.12/`，命名 `900-01..900-19-*.patch`，不产生新软件包。
-- `kmod-tcp-bbr` 提供模块、`kmod-sched` 提供 `fq`，`files/etc/sysctl.d/99-bbr.conf` 设 `net.ipv4.tcp_congestion_control=bbr`、`net.core.default_qdisc=fq`。
+- 默认值是内核自带的 **BBR（v1）**：`kmod-tcp-bbr` 提供模块、`kmod-sched` 提供 `fq`，[`files/etc/sysctl.d/99-bbr.conf`](../files/etc/sysctl.d/99-bbr.conf) 设 `net.ipv4.tcp_congestion_control=bbr`、`net.core.default_qdisc=fq`。
+- 内核**不打补丁**，构建时会校验 `tcp_bbr.c` 里没有 `BBR_VERSION`（该宏只由 BBRv3 补丁引入）。
+- 需要 **BBRv3** 时：[`patches/kernel/bbr3/`](../patches/kernel/bbr3/) 备有 OpenWrt PR #16414 的 19 个 6.12 补丁（提交 `94d8192c17`），把它们拷进 `target/linux/generic/hack-6.12/`（`900-01..900-19`，由 `include/quilt.mk` 在 backport→pending→**hack**→platform 顺序中自动应用），并去掉 workflow 里的「确认内核为原生 BBR」校验。
 - 只验证补丁不编译：手动运行 [`bbr3-validate.yml`](../.github/workflows/bbr3-validate.yml)。
 
 ---
@@ -295,7 +294,7 @@ PACKAGES="-dnsmasq dnsmasq-full luci-app-samba4 luci-i18n-samba4-zh-cn"
 
 ## 四、内核选项（摘要）
 
-`Config-kernel.in` 共 216 项，完整清单见 [`reference/build-options-25.12.2.tsv`](reference/build-options-25.12.2.tsv)。这些**只有源码全量编译**（`make menuconfig` + `make`，即正式流程 `build.yml`）才生效；ImageBuilder 备用流程的内核是预编译的，改不了（也因此拿不到 BBRv3）。
+`Config-kernel.in` 共 216 项，完整清单见 [`reference/build-options-25.12.2.tsv`](reference/build-options-25.12.2.tsv)。这些**只有源码全量编译**（`make menuconfig` + `make`，即正式流程 `build.yml`）才生效；ImageBuilder 备用流程的内核是预编译的，这些选项改不了。
 
 > 注意：网卡驱动、nftables、WireGuard、overlayfs、TUN 等“看起来像内核选项”的东西，在 25.12 里是以 `kmod-*` 包的形式提供的，请通过 `PACKAGES` 选择，不要在这里找。
 
@@ -550,4 +549,4 @@ workflow 里改这些值（必须一致）：
 
 ### 6.7 换 ImmortalWrt 版本
 
-流程的 `IW_VERSION`（源码）/ `IB_VERSION`（ImageBuilder）支持任意 `25.12.x`。升级到 25.12.3 只需改默认值或手动触发时填版本号。注意 BBRv3 补丁针对内核 6.12；若大版本换到不同内核（如 6.6），需要改用对应内核的补丁系列。
+流程的 `IW_VERSION`（源码）/ `IB_VERSION`（ImageBuilder）支持任意 `25.12.x`。升级到 25.12.3 只需改默认值或手动触发时填版本号。若之后要启用 BBRv3，注意那套补丁只针对内核 6.12；大版本换到别的内核（如 6.6）需要换对应的补丁系列。
