@@ -42,7 +42,7 @@
 
 构建完成后在 **Releases → Latest build** 直接下载，或在对应 Actions 运行的 **Artifacts** 里下载。
 
-> 源码全量构建首次约 **2~2.5 小时**（实测 148~151 分钟）；workflow 缓存 `.ccache` 和 `dl/`，之后构建约 **70~75 分钟**（实测 ccache 命中率约 99%，编译步骤从 128 分钟降到 66 分钟）。单 job 上限 6 小时，workflow 设为 350 分钟。
+> 源码全量构建首次约 **2~2.5 小时**（实测 148~151 分钟）；workflow 缓存 `.ccache` 和 `dl/`，之后构建约 **70 分钟**（实测 69~74 分钟；ccache 命中率 97%~99%，编译步骤从 128 分钟降到 66 分钟）。单 job 上限 6 小时，workflow 设为 350 分钟。
 
 ## 刷机
 
@@ -121,7 +121,7 @@ Device     Boot Start      End  Sectors Size Type
 ## 常见问题
 
 - **构建卡在下载 / 下载失败**：ImmortalWrt 镜像站偶尔限速，重跑即可；`make download` 阶段允许部分失败，编译阶段会重试。
-- **首次构建很慢**：源码全量编译正常需要 2~2.5 小时；之后有 ccache 缓存约 **70~75 分钟**（实测命中率约 99%）。ccache 的缓存目录是源码树的 `.ccache/`，缓存命中情况会在编译日志的 “ccache 编译前/后状态” 里打印。
+- **首次构建很慢**：源码全量编译正常需要 2~2.5 小时；之后有 ccache 缓存约 **70 分钟**（实测 69~74 分钟，命中率 97%~99%）。ccache 的缓存目录是源码树的 `.ccache/`，缓存命中情况会在编译日志的 “ccache 编译前/后状态” 里打印。
 - **刷完没有 Vantage**：确认刷的是本仓库产物，并在刷机时清除浏览器缓存后重新登录 LuCI。
 - **想确认拥塞控制**：看构建日志里「校验默认 BBR 配置（bbr + fq）」与「校验内核模块与 packages.txt 已装进固件」这两步；或 SSH 上路由后 `sysctl net.ipv4.tcp_congestion_control`（应为 `bbr`）、`sysctl net.core.default_qdisc`（应为 `fq`）、`lsmod | grep tcp_bbr`。
 - **想换 24.10**：本仓库只针对 25.12（apk 体系、主题 25.12 包）。24.10 需要改用 `.ipk` 主题包，不属于当前流程。
