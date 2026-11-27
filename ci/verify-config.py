@@ -81,7 +81,12 @@ def main():
         if cfg.get(key) == "y":
             errors.append("%s 不应开启（%s）" % (key, label))
 
-    # 2) 包
+    # 2) HomeProxy TUN 模式依赖：HomeProxy 用 access('/usr/libexec/ip-full')
+    #    判断是否显示 TUN 选项，只有 ip-tiny 时该文件不存在；kmod-tun 提供 tun.ko。
+    for pkg in ("ip-full", "kmod-tun"):
+        want("CONFIG_PACKAGE_%s" % pkg, "y")
+
+    # 3) 包
     with open(os.path.join(root, "config", "packages.txt"), encoding="utf-8") as fh:
         keep, drop = [], []
         for line in fh:

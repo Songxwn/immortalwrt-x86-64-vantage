@@ -269,7 +269,7 @@ jobs:
           set -euo pipefail
           MANIFEST="$(ls "$IW"/bin/targets/x86/64/*.manifest 2>/dev/null | head -n1)"
           test -n "$MANIFEST" || { echo "::error::找不到镜像 manifest"; exit 1; }
-          for p in kmod-tcp-bbr kmod-sched kmod-sched-core; do
+          for p in kmod-tcp-bbr kmod-sched kmod-sched-core kmod-tun; do
             grep -qE "^${p} " "$MANIFEST" || { echo "::error::manifest 缺少 $p（kmod 未装进 rootfs）"; exit 1; }
           done
           KN="$(grep -cE '^kmod-' "$MANIFEST")"
@@ -344,6 +344,21 @@ jobs:
           echo "--- $ROOT/etc/sysctl.d ---"
           ls -l "$ROOT/etc/sysctl.d"
 
+      - name: 校验 HomeProxy TUN 依赖（ip-full + kmod-tun）
+        run: |
+          set -euo pipefail
+          ROOT="$(ls -d "$IW"/build_dir/target-*/root-* 2>/dev/null | head -n1)"
+          test -n "$ROOT" || { echo "::error::找不到 rootfs 目录"; exit 1; }
+          # HomeProxy 用 access('/usr/libexec/ip-full') 判断 TUN 是否可选，
+          # 只有 ip-tiny 时装的是 /usr/libexec/ip-tiny，TUN 选项会被隐藏。
+          test -x "$ROOT/usr/libexec/ip-full" || {
+            echo "::error::rootfs 缺少 /usr/libexec/ip-full（HomeProxy 将无法启用 TUN 模式）"; exit 1; }
+          ls "$ROOT"/lib/modules/*/tun.ko >/dev/null 2>&1 || {
+            echo "::error::rootfs 缺少 tun.ko（kmod-tun 未装进固件）"; exit 1; }
+          echo "ip-full: $(wc -c < "$ROOT/usr/libexec/ip-full") 字节"
+          echo "sbin/ip -> $(readlink "$ROOT/sbin/ip" 2>/dev/null || echo '未创建替代链接')"
+          echo "HomeProxy TUN 依赖齐全：/usr/libexec/ip-full + tun.ko"
+
       - name: 发布 latest Release（main 分支）
         if: github.ref == 'refs/heads/main'
         env:
@@ -365,6 +380,7 @@ jobs:
           - 目标：x86/64 generic（分区 16 MiB kernel + 20 GiB rootfs，与现网设备一致）
           - 内核：Linux 6.12.103 + **BBRv3** 补丁（OpenWrt PR #16414），默认拥塞控制 bbr + fq
           - 主题：Vantage 1.2.x（含中文语言包）
+          - 代理：HomeProxy 已预装 \`ip-full\` + \`kmod-tun\`，可直接启用 TUN 模式
           - 刷机：UEFI 用 *combined-efi.img.gz，Legacy BIOS 用 *combined.img.gz
           - 查看已装包：Release 里的 *.manifest"
 

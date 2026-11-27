@@ -39,6 +39,7 @@ grub2
 grub2-bios-setup
 grub2-efi
 i915-firmware-dmc
+ip-full
 ip6tables-nft
 iptables-mod-extra
 iptables-nft

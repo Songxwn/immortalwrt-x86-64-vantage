@@ -1,4 +1,4 @@
-# 在装软件包中文说明（422 项）
+# 在装软件包中文说明（423 项）
 
 本文件逐条说明 [`config/packages.txt`](../config/packages.txt) 里随固件打包的全部软件包。
 这份清单来自现网路由器 `192.168.31.1` 的 `/etc/apk/world`，再追加了 4 个 Vantage 主题包。
@@ -17,7 +17,7 @@
 | --- | ---: |
 | 包选择规则与默认包替换 | 2 |
 | 系统基础 | 66 |
-| 网络与防火墙 | 14 |
+| 网络与防火墙 | 15 |
 | 内核模块：有线网卡驱动 | 38 |
 | 内核模块：网络与防火墙 | 47 |
 | 内核模块：加密与校验 | 32 |
@@ -34,9 +34,9 @@
 | 简体中文语言包 | 20 |
 | 运行库 | 72 |
 | Vantage 主题（本仓库新增） | 4 |
-| **合计** | **422** |
+| **合计** | **423** |
 
-> 合计 = 421 个「安装」条目 + 1 个「移除」条目 `-dnsmasq`（不单独成包，仅用于替换默认精简版）。
+> 合计 = 422 个「安装」条目 + 1 个「移除」条目 `-dnsmasq`（不单独成包，仅用于替换默认精简版）。
 
 ## 零、包选择规则与默认包替换
 
@@ -137,6 +137,7 @@ OpenWrt/ImmortalWrt 运行必需：init、ubus、uci、ubox、rpcd、uhttpd、�
 | `odhcpd-ipv6only` | 仅 IPv6 的 DHCPv6/RA 服务端，给下游发地址。 |
 | `ppp` | PPP 协议守护进程，PPPoE 拨号的基础。 |
 | `ppp-mod-pppoe` | PPP 的 PPPoE 插件（宽带拨号必需）。 |
+| `ip-full` | iproute2 完整版 `ip` 命令（`ip rule`、多路由表、TUN 等完整功能）。HomeProxy 用 `/usr/libexec/ip-full` 是否存在判断能否启用 TUN 模式；它与 `ip-tiny` 共存，`/sbin/ip` 按 alternatives 优先级指向 `ip-full`。 |
 | `iputils-arping` | arping 工具，检测 IP 冲突/邻居在线状态。 |
 | `etherwake` | 发送 WOL 网络唤醒魔术包。 |
 | `resolveip` | 把域名解析成 IP 的小工具（脚本常用）。 |

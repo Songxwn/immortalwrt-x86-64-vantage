@@ -12,7 +12,7 @@
 - 内核：Linux **6.12.103** + BBRv3 补丁（[OpenWrt PR #16414](https://github.com/openwrt/openwrt/pull/16414)，19 个补丁，见 [`patches/kernel/bbr3/`](patches/kernel/bbr3/)）
 - 拥塞控制：默认 `bbr` + `fq`，由 `files/etc/sysctl.d/99-bbr.conf` 生效，`kmod-tcp-bbr` / `kmod-sched` 随固件安装
 - 主题：[Vantage](https://github.com/anothaDev/luci-theme-vantage) 1.2.x（feed 方式编译）+ 中文语言包，已设为默认主题
-- 包清单：来自现网路由 `/etc/apk/world`（421 个包 + 移除 `dnsmasq`），见 [`config/packages.txt`](config/packages.txt)
+- 包清单：来自现网路由 `/etc/apk/world`（422 个包 + 移除 `dnsmasq`，含 HomeProxy TUN 所需的 `ip-full` / `kmod-tun`），见 [`config/packages.txt`](config/packages.txt)
 - 分区表：与现网设备 `/dev/sda` 完全一致（16 MiB kernel + 20 GiB rootfs），见[下方说明](#分区布局)
 - 产物：
   - `*combined-efi.img.gz` —— UEFI 启动，**推荐**

@@ -2,7 +2,7 @@
 
 本文件列出 25.12.2 x86-64 官方源里**存在、但当前没有装进固件**的常用包，方便按需增补。
 
-- 当前在装的 422 项见 [`packages.md`](packages.md)。
+- 当前在装的 423 项见 [`packages.md`](packages.md)。
 - 全部 11 618 个包名（含版本、来源 feed）见 [`reference/packages-25.12.2-x86_64.tsv`](reference/packages-25.12.2-x86_64.tsv)。
 - 添加方式：把包名写进 [`config/packages.txt`](../config/packages.txt)，一行一个，然后 push 触发构建。
 - 下表里标 **（已装）** 的表示清单里已经有了，不用重复添加。
@@ -19,7 +19,7 @@
 
 | 包名 | 说明 |
 | --- | --- |
-| `luci-app-homeproxy` **（已装）** | 基于 sing-box 的代理界面，支持订阅、规则分流、TUN 模式，配置最简单 |
+| `luci-app-homeproxy` **（已装）** | 基于 sing-box 的代理界面，支持订阅、规则分流、TUN 模式，配置最简单。TUN 依赖 `ip-full` 与 `kmod-tun`，本固件已预装，开箱即可启用 |
 | `sing-box` **（已装）** | HomeProxy 的后端代理内核 |
 | `luci-app-passwall` | 老牌全能代理插件，支持 SS/SSR/VMess/VLESS/Trojan/Hysteria 等，功能多、配置项也多 |
 | `luci-app-openclash` | Clash 内核 + 图形界面，适合直接用 Clash 订阅 |
